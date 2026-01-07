@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Permet de router automatiquement via le nom du service (ex: /trip-service/**)
+          lower-case-service-id: true
+      routes:
+        - id: trip-service
+          uri: lb://trip-service
+          predicates:
+            - Path=/api/trips/**
+          filters:
+            - StripPrefix=1 # Requis si le service ne s'attend pas à /api/trips mais direct /trips ou /
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

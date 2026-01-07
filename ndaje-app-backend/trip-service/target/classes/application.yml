@@ -1,0 +1,11 @@
+server:
+  port: 8081 # Port par défaut pour éviter conflit avec Gateway (8080)
+
+spring:
+  application:
+     name: trip-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
