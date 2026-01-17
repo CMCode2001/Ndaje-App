@@ -1,0 +1,11 @@
+com\ndajee\documentservice\config\S3Config.class
+com\ndajee\documentservice\service\DocumentService.class
+com\ndajee\documentservice\service\S3StorageService.class
+com\ndajee\documentservice\DocumentServiceApplication.class
+com\ndajee\documentservice\exception\GlobalExceptionHandler.class
+com\ndajee\documentservice\repository\DocumentRepository.class
+com\ndajee\documentservice\controller\DocumentController.class
+com\ndajee\documentservice\dto\DocumentResponse.class
+com\ndajee\documentservice\exception\StorageException.class
+com\ndajee\documentservice\exception\DocumentNotFoundException.class
+com\ndajee\documentservice\entity\Document.class
