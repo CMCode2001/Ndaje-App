@@ -16,6 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.ndajee.userservice.dto.*;
 
+/**
+ * Service gérant la logique métier des utilisateurs.
+ * Assure la cohérence entre la base de données locale et Keycloak.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,8 +30,12 @@ public class UserService {
     private final UtilisateurRepository utilisateurRepository;
     private final KeycloakService keycloakService;
 
-@Transactional
-public UserResponse registerPassager(UserRegistrationRequest request) {
+    /**
+     * Inscrit un nouveau passager. Utilise une transaction pour assurer que 
+     * l'utilisateur est supprimé de Keycloak si l'enregistrement local échoue (rollback).
+     */
+    @Transactional
+    public UserResponse registerPassager(UserRegistrationRequest request) {
 
     if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
         throw new BusinessException("Email déjà utilisé.");
@@ -64,6 +72,9 @@ public UserResponse registerPassager(UserRegistrationRequest request) {
     }
 }
 
+    /**
+     * Inscrit un nouveau conducteur avec rollback automatique en cas d'erreur.
+     */
     @Transactional
     public UserResponse registerConducteur(UserRegistrationRequest request) {
         if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -110,6 +121,9 @@ public UserResponse registerPassager(UserRegistrationRequest request) {
         keycloakService.forgotPassword(email);
     }
 
+    /**
+     * Modifie les informations du profil. Synchronise les changements localement et sur Keycloak.
+     */
     @Transactional
     public UserResponse updateProfile(String id, UpdateProfileRequest request) {
         Utilisateur user = utilisateurRepository.findById(id)

@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Contrôleur simple pour le service de gestion des trajets.
+ */
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor

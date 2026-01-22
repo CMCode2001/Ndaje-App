@@ -13,6 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service métier orchestrant la gestion des documents.
+ * Combine les opérations de base de données (métadonnées) et le stockage Cloudflare R2 (fichiers).
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,8 +25,15 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final S3StorageService s3StorageService;
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    /** Taille maximale autorisée : 10 Mo */
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+    /**
+     * Effectue l'upload complet d'un document : stockage physique puis enregistrement en base.
+     * @param file Le fichier à uploader
+     * @param utilisateurId L'ID du propriétaire
+     * @return Les métadonnées du document sauvegardé
+     */
     @Transactional
     public DocumentResponse uploadDocument(MultipartFile file, String utilisateurId) {
         // Validate file
@@ -51,6 +62,11 @@ public class DocumentService {
         return mapToResponse(saved);
     }
 
+    /**
+     * Récupère le contenu binaire d'un document.
+     * @param id Identifiant technique du document
+     * @return Données du fichier
+     */
     public byte[] downloadDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new DocumentNotFoundException(id));
@@ -58,6 +74,9 @@ public class DocumentService {
         return s3StorageService.downloadFile(document.getUrlS3());
     }
 
+    /**
+     * Récupère les métadonnées d'un document par son ID.
+     */
     public DocumentResponse getDocumentMetadata(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new DocumentNotFoundException(id));
@@ -65,18 +84,28 @@ public class DocumentService {
         return mapToResponse(document);
     }
 
+    /**
+     * Liste tous les documents enregistrés dans le système.
+     */
     public List<DocumentResponse> getAllDocuments() {
         return documentRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Liste les documents appartenant à un utilisateur spécifique.
+     */
     public List<DocumentResponse> getDocumentsByUser(String utilisateurId) {
         return documentRepository.findByUtilisateurId(utilisateurId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Supprime un document : physique (R2) et logique (BDD).
+     * @param id ID du document à supprimer
+     */
     @Transactional
     public void deleteDocument(Long id) {
         Document document = documentRepository.findById(id)

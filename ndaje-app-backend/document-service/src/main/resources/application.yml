@@ -26,26 +26,42 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/ndajee-realm
+          jwk-set-uri: http://localhost:8081/realms/ndajee-realm/protocol/openid-connect/certs
+
 server:
   port: 8086
 
 # Cloudflare R2 Configuration (S3-compatible)
 cloudflare:
   r2:
+    account-id: eb29816742395623567cbace0d59f0d0
     access-key: 2c2b6024a91313a4670adc0b7237bf7b
-    secret-key: e6e2385faddab303a19a22708447ae0c2d179948ebbdbabaad0a96b15e42228ad
+    secret-key: e6e2385faddab303a19a22708447ae0c2d179948ebbdabaad0a96b15e42228ad
     endpoint: https://eb29816742395623567cbace0d59f0d0.r2.cloudflarestorage.com
     bucket: ndajee-documents
     region: auto
 
 # Mapping for S3 Client (compatibility layer)
-aws:
-  s3:
-    bucket-name: ${cloudflare.r2.bucket}
-    region: ${cloudflare.r2.region}
-    access-key: ${cloudflare.r2.access-key}
-    secret-key: ${cloudflare.r2.secret-key}
-    endpoint: ${cloudflare.r2.endpoint}
+# aws:
+#   s3:
+#     bucket-name: ${cloudflare.r2.bucket}
+#     region: ${cloudflare.r2.region}
+#     access-key: ${cloudflare.r2.access-key}
+#     secret-key: ${cloudflare.r2.secret-key}
+#     endpoint: ${cloudflare.r2.endpoint}
+
+# Eureka Client Configuration
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
 
 # Logging
 logging:

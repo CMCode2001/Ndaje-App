@@ -13,6 +13,10 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * Service de bas niveau gérant les interactions directes avec le stockage Cloudflare R2 (API compatible S3).
+ * S'occupe de l'upload, du téléchargement et de la suppression physique des fichiers.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -20,11 +24,15 @@ public class S3StorageService {
 
     private final S3Client s3Client;
 
-    @Value("${aws.s3.bucket-name}")
+    @Value("${cloudflare.r2.bucket}")
     private String bucketName;
 
     /**
-     * Upload file to S3 and return the S3 object key
+     * Upload un fichier vers Cloudflare R2 et génère une clé unique.
+     * @param file Fichier multipart à uploader
+     * @param utilisateurId ID de l'utilisateur pour l'organisation des dossiers dans R2
+     * @return Clé unique de l'objet stocké (S3 Key)
+     * @throws StorageException en cas d'erreur de lecture ou d'accès S3
      */
     public String uploadFile(MultipartFile file, String utilisateurId) {
         if (file.isEmpty()) {
@@ -61,7 +69,10 @@ public class S3StorageService {
     }
 
     /**
-     * Download file from S3
+     * Télécharge le contenu d'un fichier depuis Cloudflare R2.
+     * @param s3Key Clé unique du fichier
+     * @return Tableau d'octets contenant les données du fichier
+     * @throws StorageException si le fichier n'existe pas ou en cas d'erreur réseau
      */
     public byte[] downloadFile(String s3Key) {
         try {
@@ -84,7 +95,9 @@ public class S3StorageService {
     }
 
     /**
-     * Delete file from S3
+     * Supprime un fichier du stockage Cloudflare R2.
+     * @param s3Key Clé unique du fichier à supprimer
+     * @throws StorageException en cas d'échec de la suppression
      */
     public void deleteFile(String s3Key) {
         try {
