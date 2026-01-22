@@ -1,0 +1,6 @@
+services:
+  ndaje-front:
+    build: .
+    ports:
+      - "7000:7000"
+    restart: always

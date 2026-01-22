@@ -1,0 +1,17 @@
+# Dépendances (toujours reconstruites dans Docker)
+node_modules
+
+# Résultats de build (générés dans l’image)
+dist
+
+# Git
+.git
+.gitignore
+
+# Fichiers locaux / docs
+*.md
+build_log.txt
+
+# IDE / OS
+.vscode
+.DS_Store
