@@ -19,6 +19,7 @@
 		<module>eureka-server</module>
 		<module>api-gateway</module>
 		<module>trip-service</module>
+		<module>reservation-service</module>
 	</modules>
 
 	<properties>
