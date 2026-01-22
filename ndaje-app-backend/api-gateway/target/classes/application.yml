@@ -29,6 +29,12 @@ spring:
           predicates:
             - Path=/api/documents/**
 
+        # Route Reservation Service
+        - id: reservation-service
+          uri: lb://reservation-service
+          predicates:
+            - Path=/api/reservations/**
+
 eureka:
   instance:
     prefer-ip-address: true

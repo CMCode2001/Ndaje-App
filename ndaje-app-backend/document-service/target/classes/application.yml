@@ -34,11 +34,11 @@ server:
 # Cloudflare R2 Configuration (S3-compatible)
 cloudflare:
   r2:
-    account-id: eb29816742395623567cbace0d59f0d0
-    access-key: 2c2b6024a91313a4670adc0b7237bf7b
-    secret-key: e6e2385faddab303a19a22708447ae0c2d179948ebbdabaad0a96b15e42228ad
-    endpoint: https://eb29816742395623567cbace0d59f0d0.r2.cloudflarestorage.com
-    bucket: ndajee-documents
+    account-id: ${R2_ACCOUNT_ID}
+    access-key: ${R2_ACCESS_KEY}
+    secret-key: ${R2_SECRET_KEY}
+    endpoint: ${R2_ENDPOINT}
+    bucket: ${R2_BUCKET}
     region: auto
 
 # Mapping for S3 Client (compatibility layer)

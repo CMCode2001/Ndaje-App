@@ -84,7 +84,7 @@ public class UserService {
         String keycloakId = null;
 
         try {
-            keycloakId = keycloakService.createUser(request, "CONDUCTEUR");
+            keycloakId = keycloakService.createUser(request, "DRIVER");
 
             Conducteur conducteur = new Conducteur();
             mapCommonFields(conducteur, request);
@@ -92,7 +92,7 @@ public class UserService {
             conducteur.setStatut(StatutConducteur.HORS_LIGNE); // Default status
             
             Conducteur saved = conducteurRepository.save(conducteur);
-            return mapToResponse(saved, "CONDUCTEUR");
+            return mapToResponse(saved, "DRIVER");
         } catch (Exception ex) {
             if (keycloakId != null) {
                 try {
@@ -143,7 +143,7 @@ public class UserService {
     
     private String getRoleFromEntity(Utilisateur user) {
         if (user instanceof Passager) return "PASSAGER";
-        if (user instanceof Conducteur) return "CONDUCTEUR";
+        if (user instanceof Conducteur) return "DRIVER";
         return "INCONNU";
     }
 

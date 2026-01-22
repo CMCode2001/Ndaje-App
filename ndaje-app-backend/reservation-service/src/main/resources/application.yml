@@ -1,13 +1,13 @@
 server:
-  port: 8096
+  port: 8088
 
 spring:
   application:
     name: reservation-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/ndaje_reservation_db
-    username: postgres
-    password: admin
+    url: ${RESERVATION_DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: create-drop
