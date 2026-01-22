@@ -1,0 +1,1 @@
+export const BASE_URL_RESERVATION = "http://localhost:8096/api/reservations";
