@@ -1,13 +1,13 @@
 server:
-  port: 8096
+  port: 8088
 
 spring:
   application:
     name: reservation-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/reservationDB
-    username: postgres
-    password: cmc
+    url: ${RESERVATION_DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: create-drop

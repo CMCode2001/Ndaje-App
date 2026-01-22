@@ -31,9 +31,14 @@ public class KeycloakService {
     @Value("${keycloak.admin.realm}")
     private String realm;
 
-    private final String keycloakUrl = "http://localhost:8081";
-    private final String clientId = "ndajee-client";
-    private final String clientSecret = "juYkaotpPqXyjpXC0NFttPMS7hYsiOPL";
+    @Value("${keycloak.admin.server-url}")
+    private String keycloakUrl;
+    
+    @Value("${keycloak.admin.client-id}")
+    private String clientId;
+    
+    @Value("${keycloak.admin.client-secret}")
+    private String clientSecret;
 
     public KeycloakService(Keycloak keycloak) {
         this.keycloak = keycloak;

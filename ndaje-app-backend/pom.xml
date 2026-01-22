@@ -20,6 +20,8 @@
 		<module>api-gateway</module>
 		<module>trip-service</module>
 		<module>reservation-service</module>
+		<module>user-service</module>
+		<module>document-service</module>
 	</modules>
 
 	<properties>
@@ -36,7 +38,54 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- ajoute devtools -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-devtools</artifactId>
+				<scope>runtime</scope>
+				<optional>true</optional>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
+	<dependencies>
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<KEYCLOAK_SERVER_URL>${KEYCLOAK_SERVER_URL}</KEYCLOAK_SERVER_URL>
+						<KEYCLOAK_REALM>${KEYCLOAK_REALM}</KEYCLOAK_REALM>
+						<KEYCLOAK_ADMIN_CLIENT_ID>${KEYCLOAK_ADMIN_CLIENT_ID}</KEYCLOAK_ADMIN_CLIENT_ID>
+						<KEYCLOAK_ADMIN_CLIENT_SECRET>${KEYCLOAK_ADMIN_CLIENT_SECRET}</KEYCLOAK_ADMIN_CLIENT_SECRET>
+						<DB_USERNAME>${DB_USERNAME}</DB_USERNAME>
+						<DB_PASSWORD>${DB_PASSWORD}</DB_PASSWORD>
+						<USER_DB_URL>${USER_DB_URL}</USER_DB_URL>
+						<TRIP_DB_URL>${TRIP_DB_URL}</TRIP_DB_URL>
+						<RESERVATION_DB_URL>${RESERVATION_DB_URL}</RESERVATION_DB_URL>
+						<R2_ACCOUNT_ID>${R2_ACCOUNT_ID}</R2_ACCOUNT_ID>
+						<R2_ACCESS_KEY>${R2_ACCESS_KEY}</R2_ACCESS_KEY>
+						<R2_SECRET_KEY>${R2_SECRET_KEY}</R2_SECRET_KEY>
+						<R2_BUCKET>${R2_BUCKET}</R2_BUCKET>
+						<R2_ENDPOINT>${R2_ENDPOINT}</R2_ENDPOINT>
+					</environmentVariables>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

@@ -7,6 +7,7 @@
         <groupId>com.ndaje</groupId>
         <artifactId>ndaje-app-backend</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>api-gateway</artifactId>
