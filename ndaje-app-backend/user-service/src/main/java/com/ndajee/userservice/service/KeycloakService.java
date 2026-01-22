@@ -16,6 +16,12 @@ import com.ndajee.userservice.dto.TokenResponse;
 import com.ndajee.userservice.dto.LoginRequest;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.RoleRepresentation;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 import java.util.Collections;
 import java.util.List;
@@ -188,6 +194,33 @@ public class KeycloakService {
             }
             String path = location.getPath();
             return path.substring(path.lastIndexOf('/') + 1);
+        }
+    }
+
+    public void logout(String refreshToken) {
+        try {
+            String url = keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/logout";
+            
+            String body = "client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8) +
+                          "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8) +
+                          "&refresh_token=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 204) {
+                throw new BusinessException("Erreur lors de la déconnexion Keycloak: " + response.statusCode());
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Erreur technique lors de la déconnexion : " + e.getMessage());
         }
     }
 }

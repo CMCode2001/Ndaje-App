@@ -22,6 +22,8 @@ public abstract class Utilisateur extends Auditable {
     private String email;
     private String telephone;
     
+    private String role;
+    
     private boolean actif=true;
 
 }

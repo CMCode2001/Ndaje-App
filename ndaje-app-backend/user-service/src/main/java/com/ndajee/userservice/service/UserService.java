@@ -51,6 +51,7 @@ public class UserService {
 
         passager.setId(keycloakId);
 
+        passager.setRole("PASSAGER");
         passager.setPointsFidelite(50);
 
         Passager saved = passagerRepository.save(passager);
@@ -89,6 +90,7 @@ public class UserService {
             Conducteur conducteur = new Conducteur();
             mapCommonFields(conducteur, request);
             conducteur.setId(keycloakId);
+            conducteur.setRole("DRIVER");
             conducteur.setStatut(StatutConducteur.HORS_LIGNE); // Default status
             
             Conducteur saved = conducteurRepository.save(conducteur);
@@ -107,6 +109,10 @@ public class UserService {
     // ...
     public TokenResponse login(LoginRequest request) {
         return keycloakService.login(request);
+    }
+
+    public void logout(LogoutRequest request) {
+        keycloakService.logout(request.getRefreshToken());
     }
 
     private void mapCommonFields(Utilisateur user, UserRegistrationRequest request) {
@@ -142,6 +148,7 @@ public class UserService {
     }
     
     private String getRoleFromEntity(Utilisateur user) {
+        if (user.getRole() != null) return user.getRole();
         if (user instanceof Passager) return "PASSAGER";
         if (user instanceof Conducteur) return "DRIVER";
         return "INCONNU";

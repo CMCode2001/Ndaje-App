@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.ndajee.userservice.dto.UpdateProfileRequest;
+import com.ndajee.userservice.dto.LogoutRequest;
 
 /**
  * Contrôleur gérant les opérations utilisateurs standards : inscription, connexion, profil.
@@ -46,6 +47,13 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<com.ndajee.userservice.dto.TokenResponse> login(@Valid @RequestBody com.ndajee.userservice.dto.LoginRequest request) {
         return ResponseEntity.ok(userService.login(request));
+    }
+
+    /** Déconnexion (invalidation refresh token) */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        userService.logout(request);
+        return ResponseEntity.noContent().build();
     }
 
     /** Envoi d'un email de réinitialisation de mot de passe (via Keycloak) */
