@@ -5,9 +5,9 @@ spring:
   application:
     name: reservation-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/reservationDB
+    url: jdbc:postgresql://localhost:5433/ndaje_reservation_db
     username: postgres
-    password: cmc
+    password: admin
   jpa:
     hibernate:
       ddl-auto: create-drop

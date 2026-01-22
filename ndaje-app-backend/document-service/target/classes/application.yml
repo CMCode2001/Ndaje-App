@@ -3,10 +3,9 @@ spring:
     name: document-service
   
   datasource:
-    url: jdbc:h2:mem:documentdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5433/ndaje_document_db
+    username: postgres
+    password: admin
   
   jpa:
     hibernate:
@@ -15,11 +14,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   
   servlet:
     multipart:
@@ -41,7 +36,7 @@ cloudflare:
   r2:
     account-id: eb29816742395623567cbace0d59f0d0
     access-key: 2c2b6024a91313a4670adc0b7237bf7b
-    secret-key: e6e2385faddab303a19a22708447ae0c2d179948ebbdbabaad0a96b15e42228ad
+    secret-key: e6e2385faddab303a19a22708447ae0c2d179948ebbdabaad0a96b15e42228ad
     endpoint: https://eb29816742395623567cbace0d59f0d0.r2.cloudflarestorage.com
     bucket: ndajee-documents
     region: auto
