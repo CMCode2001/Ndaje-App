@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.ndajee.userservice.dto.UpdateProfileRequest;
 
+/**
+ * Contrôleur gérant les opérations utilisateurs standards : inscription, connexion, profil.
+ */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -23,12 +26,14 @@ public class UserController {
 
     private final UserService userService;
 
+    /** Inscription d'un passager - Création Keycloak + BDD locale */
     @PostMapping("/register/passenger")
     public ResponseEntity<UserResponse> registerPassenger(@Valid @RequestBody UserRegistrationRequest request) {
         UserResponse response = userService.registerPassager(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    /** Inscription d'un conducteur - Création Keycloak + BDD locale */
     @PostMapping("/register/driver")
     public ResponseEntity<UserResponse> registerDriver(@Valid @RequestBody UserRegistrationRequest request) {
         UserResponse response = userService.registerConducteur(request);
@@ -37,17 +42,20 @@ public class UserController {
 
 
     
+    /** Authentification via Keycloak et retour du token JWT */
     @PostMapping("/login")
     public ResponseEntity<com.ndajee.userservice.dto.TokenResponse> login(@Valid @RequestBody com.ndajee.userservice.dto.LoginRequest request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
+    /** Envoi d'un email de réinitialisation de mot de passe (via Keycloak) */
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgotPassword(@RequestParam String email) {
         userService.forgotPassword(email);
         return ResponseEntity.noContent().build();
     }
 
+    /** Mise à jour des informations de profil (Synchronisé Keycloak + BDD) */
     @org.springframework.web.bind.annotation.PutMapping("/{id}/profile")
     public ResponseEntity<UserResponse> updateProfile(@org.springframework.web.bind.annotation.PathVariable String id, @Valid @RequestBody com.ndajee.userservice.dto.UpdateProfileRequest request) {
         UserResponse response = userService.updateProfile(id, request);

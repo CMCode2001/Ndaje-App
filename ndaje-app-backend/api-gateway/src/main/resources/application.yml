@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9000
 
 spring:
   application:
@@ -8,17 +8,30 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true # Permet de router automatiquement via le nom du service (ex: /trip-service/**)
+          enabled: true
           lower-case-service-id: true
       routes:
+        # Route Trip Service
         - id: trip-service
           uri: lb://trip-service
           predicates:
             - Path=/api/trips/**
-          filters:
-            - StripPrefix=1 # Requis si le service ne s'attend pas à /api/trips mais direct /trips ou /
+
+        # Route User Service
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**, /api/admin/**
+
+        # Route Document Service
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/api/documents/**
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/

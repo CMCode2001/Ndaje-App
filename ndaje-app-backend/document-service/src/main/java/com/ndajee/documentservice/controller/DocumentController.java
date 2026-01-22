@@ -13,6 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * Contrôleur REST pour la gestion des documents.
+ * Expose les endpoints pour l'upload, le téléchargement, la liste et la suppression.
+ */
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor

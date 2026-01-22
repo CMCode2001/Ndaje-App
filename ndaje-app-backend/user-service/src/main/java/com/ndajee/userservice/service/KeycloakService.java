@@ -20,6 +20,9 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Service technique gérant l'intégration directe avec l'API Admin de Keycloak.
+ */
 @Service
 public class KeycloakService {
 
@@ -36,6 +39,10 @@ public class KeycloakService {
         this.keycloak = keycloak;
     }
 
+    /**
+     * Crée un utilisateur dans Keycloak avec un mot de passe et un rôle.
+     * @return L'ID (UUID) généré par Keycloak
+     */
     public String createUser(UserRegistrationRequest userRegistrationRequest, String role) {
         try {
             UserRepresentation user = new UserRepresentation();
@@ -84,6 +91,10 @@ public class KeycloakService {
         }
     }
     
+    /**
+     * Authentifie un utilisateur auprès de Keycloak (Direct Access Grant).
+     * @return Les tokens JWT (Access, Refresh)
+     */
     public TokenResponse login(LoginRequest request) {
         try {
             Keycloak keycloakUser = KeycloakBuilder.builder()
@@ -139,6 +150,7 @@ public class KeycloakService {
         }
     }
 
+    /** Met à jour le nom/prénom dans Keycloak */
     public void updateUser(String userId, com.ndajee.userservice.dto.UpdateProfileRequest request) {
         try {
             UserRepresentation user = keycloak.realm(realm).users().get(userId).toRepresentation();

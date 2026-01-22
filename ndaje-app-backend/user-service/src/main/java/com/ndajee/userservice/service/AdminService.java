@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service gérant les opérations administratives sur les utilisateurs.
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -20,6 +23,7 @@ public class AdminService {
     private final UtilisateurRepository utilisateurRepository;
     private final KeycloakService keycloakService;
 
+    /** Récupère la liste de tous les utilisateurs (Passagers et Conducteurs) */
     public List<UserResponse> getAllUsers() {
         return utilisateurRepository.findAll().stream()
                 .map(user -> mapToResponse(user, getRoleFromEntity(user)))
@@ -32,6 +36,7 @@ public class AdminService {
         return mapToResponse(user, getRoleFromEntity(user));
     }
 
+    /** Supprime un utilisateur localement et sur Keycloak */
     @Transactional
     public void deleteUser(String id) {
         if (!utilisateurRepository.existsById(id)) {
@@ -43,6 +48,7 @@ public class AdminService {
         keycloakService.deleteUser(id);
     }
 
+    /** Active ou bloque un utilisateur sur Keycloak et en BDD */
     @Transactional
     public void updateUserStatus(String id, boolean active) {
         Utilisateur user = utilisateurRepository.findById(id)

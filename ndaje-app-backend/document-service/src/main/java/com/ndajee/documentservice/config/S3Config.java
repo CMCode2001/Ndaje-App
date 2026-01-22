@@ -13,32 +13,33 @@ import java.net.URI;
 @Configuration
 public class S3Config {
 
-    @Value("${aws.s3.region}")
-    private String region;
-
-    @Value("${aws.s3.access-key}")
+    @Value("${cloudflare.r2.access-key}")
     private String accessKey;
 
-    @Value("${aws.s3.secret-key}")
+    @Value("${cloudflare.r2.secret-key}")
     private String secretKey;
 
-    @Value("${aws.s3.endpoint:}")
+    @Value("${cloudflare.r2.endpoint}")
     private String endpoint;
 
     @Bean
     public S3Client s3Client() {
-        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
-        
-        var builder = S3Client.builder()
-                .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials));
-        
-        // For Cloudflare R2, use custom endpoint
-        if (endpoint != null && !endpoint.isEmpty()) {
-            builder.endpointOverride(URI.create(endpoint));
-        }
-        
-        return builder.build();
+
+        AwsBasicCredentials credentials =
+                AwsBasicCredentials.create(accessKey, secretKey);
+
+        return S3Client.builder()
+                .endpointOverride(URI.create(endpoint))
+                .region(Region.of("auto")) // OBLIGATOIRE POUR R2
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(credentials)
+                )
+                .serviceConfiguration(software.amazon.awssdk.services.s3.S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .chunkedEncodingEnabled(false)
+                        .build())
+                .build();
     }
 }
+
 
