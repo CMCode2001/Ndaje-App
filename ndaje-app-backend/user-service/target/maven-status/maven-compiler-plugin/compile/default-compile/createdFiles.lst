@@ -15,6 +15,8 @@ com\ndajee\userservice\repositories\PassagerRepository.class
 com\ndajee\userservice\repositories\UtilisateurRepository.class
 com\ndajee\userservice\config\KeycloakConfig.class
 com\ndajee\userservice\dto\TokenResponse.class
+com\ndajee\userservice\config\OpenApiConfig.class
+com\ndajee\userservice\dto\LogoutRequest.class
 com\ndajee\userservice\config\KeycloakConfig$KeycloakAdminProperties.class
 com\ndajee\userservice\entities\Utilisateur.class
 com\ndajee\userservice\dto\LoginRequest.class
