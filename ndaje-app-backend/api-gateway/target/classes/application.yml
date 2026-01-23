@@ -10,6 +10,19 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ["http://localhost:5173", "http://localhost:7000"]
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
         # Route Trip Service
         - id: trip-service
