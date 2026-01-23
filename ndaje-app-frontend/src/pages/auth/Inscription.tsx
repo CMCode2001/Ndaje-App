@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, Car, Users, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, Phone, Car, Users, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +23,7 @@ export function Inscription({ onToggleAuth }: InscriptionProps) {
     telephone: "",
     password: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +120,21 @@ export function Inscription({ onToggleAuth }: InscriptionProps) {
             <label className="text-sm font-medium text-white/80 ml-1">Mot de passe</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-hover:text-primary transition-colors" />
-              <Input type="password" name="password" placeholder="••••••••" className="pl-12" required onChange={handleChange} />
+              <Input 
+                type={showPassword ? "text" : "password"} 
+                name="password" 
+                placeholder="••••••••" 
+                className="pl-12 pr-12" 
+                required 
+                onChange={handleChange} 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-3.5 text-white/40 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 

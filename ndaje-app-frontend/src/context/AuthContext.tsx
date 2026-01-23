@@ -17,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: any) => Promise<void>;
   register: (data: any, role: 'passenger' | 'driver') => Promise<void>;
+  updateUser: (data: Partial<User>) => Promise<void>;
   logout: () => void;
 }
 
@@ -67,27 +68,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(responseData.message || 'Identifiants invalides');
       }
 
-      // Si le backend renvoie juste un token, on décode les infos
       const token = responseData.accessToken || responseData.token;
-      let userData = responseData.user || responseData.data || responseData;
+      const userId = responseData.id || responseData.user?.id || (token ? decodeJWT(token)?.sub : null);
 
-      if (token && (!userData.prenom || !userData.nom)) {
-        const decoded = decodeJWT(token);
-        if (decoded) {
-          userData = {
-            ...userData,
-            id: decoded.sub || userData.id,
-            email: decoded.email || userData.email,
-            prenom: decoded.prenom || decoded.given_name || userData.prenom,
-            nom: decoded.nom || decoded.family_name || userData.nom,
-            role: decoded.role || (decoded.realm_access?.roles?.includes('ADMIN') ? 'ADMIN' : decoded.roles?.[0] || userData.role)
-          };
-        }
+      if (!token || !userId) {
+        throw new Error('Informations de session incomplètes');
       }
-      
+
+      // Récupérer le profil complet depuis le backend pour avoir tous les champs (téléphone, etc.)
+      let fullUserData = responseData.user || responseData.data || responseData;
+      try {
+        const profileResponse = await fetch(`${BASE_URL_USERS}/${userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (profileResponse.ok) {
+          fullUserData = await profileResponse.json();
+        }
+      } catch (err) {
+        console.warn("Could not fetch full profile, falling back to login data", err);
+      }
+
+      const decoded = decodeJWT(token);
+      const realmRoles = decoded?.realm_access?.roles || [];
+      const detectedRole = realmRoles.find((r: string) => ['ADMIN', 'DRIVER', 'PASSAGER', 'PASSENGER'].includes(r)) || fullUserData.role || '';
+      const normalizedRole = detectedRole === 'PASSENGER' ? 'PASSAGER' : detectedRole;
+
       const sessionUser = {
-        ...userData,
-        role: (userData.role || '').toUpperCase()
+        ...fullUserData,
+        id: userId,
+        role: normalizedRole.toUpperCase(),
+        // Assurer que les champs de base sont présents
+        prenom: fullUserData.prenom || decoded?.given_name || '',
+        nom: fullUserData.nom || decoded?.family_name || '',
+        email: fullUserData.email || decoded?.email || ''
       };
 
       setUser(sessionUser);
@@ -115,9 +128,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const token = result.accessToken || result.token;
+      const userId = result.id || result.user?.id || (token ? decodeJWT(token)?.sub : null);
       const userData = result.user || result.data || result;
       const sessionUser = {
         ...userData,
+        id: userId,
         role: (userData.role || '').toUpperCase()
       };
 
@@ -125,6 +140,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(token);
       localStorage.setItem('user', JSON.stringify(sessionUser));
       if (token) localStorage.setItem('token', token);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUser = async (updatedData: Partial<User>) => {
+    if (!user || !token) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL_USERS}/${user.id}/profile`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      const responseData = await response.json().catch(() => ({}));
+      console.log("DEBUG: Profile Update Response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Erreur lors de la mise à jour');
+      }
+
+      // Utiliser la réponse du backend si elle contient l'utilisateur, sinon merger localement
+      const updatedUserFromBackend = responseData.user || responseData.data || responseData;
+      
+      const sessionUser = {
+        ...user, // Garder les infos actuelles (comme l'ID) si elles manquent dans la réponse
+        ...updatedUserFromBackend,
+        role: (updatedUserFromBackend.role || user.role || '').toUpperCase()
+      };
+
+      console.log("DEBUG: New Session User State:", sessionUser);
+
+      setUser(sessionUser);
+      localStorage.setItem('user', JSON.stringify(sessionUser));
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isLoading, login, register, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

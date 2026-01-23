@@ -227,7 +227,12 @@ export function LandingPage() {
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button size="lg" variant="outline" className="px-10 text-lg h-14 rounded-full border-2 w-full md:w-auto">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="px-10 text-lg h-14 rounded-full border-2 w-full md:w-auto"
+                onClick={() => navigate("/auth")}
+              >
                 Devenir conducteur
               </Button>
             </motion.div>
