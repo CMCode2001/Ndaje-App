@@ -13,17 +13,25 @@ function ScrollToTop() {
   return null;
 }
 
+import AdminPage from "./pages/admin/Admin";
+import { AuthProvider } from "./context/AuthContext";
+import { Toaster } from "sonner";
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/trips" element={<TripsPages />} />
-        <Route path="*" element={<LandingPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Toaster position="top-right" richColors expand={true} />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/trips" element={<TripsPages />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="*" element={<LandingPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

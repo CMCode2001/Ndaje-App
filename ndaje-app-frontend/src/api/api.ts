@@ -1,1 +1,3 @@
-export const BASE_URL_RESERVATION = "http://localhost:8096/api/reservations";
+export const BASE_URL_RESERVATION = "/api/reservations";
+export const BASE_URL_USERS = "/api/users";
+export const BASE_URL_ADMIN = "/api/admin/users";

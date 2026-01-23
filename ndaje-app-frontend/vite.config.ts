@@ -42,4 +42,20 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/api/users': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
+      '/api/admin': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
+      '/api/reservations': {
+        target: 'http://localhost:8096',
+        changeOrigin: true,
+      }
+    }
+  }
 })
