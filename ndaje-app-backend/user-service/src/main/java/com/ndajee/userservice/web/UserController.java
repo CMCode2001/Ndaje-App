@@ -63,6 +63,12 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Récupère les informations de profil par ID */
+    @org.springframework.web.bind.annotation.GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUserById(@org.springframework.web.bind.annotation.PathVariable String id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+
     /** Mise à jour des informations de profil (Synchronisé Keycloak + BDD) */
     @org.springframework.web.bind.annotation.PutMapping("/{id}/profile")
     public ResponseEntity<UserResponse> updateProfile(@org.springframework.web.bind.annotation.PathVariable String id, @Valid @RequestBody com.ndajee.userservice.dto.UpdateProfileRequest request) {

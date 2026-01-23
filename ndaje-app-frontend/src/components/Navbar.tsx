@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,9 @@ export function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
 
   // Lock body scroll when menu is open
   React.useEffect(() => {
@@ -46,13 +49,13 @@ export function Navbar() {
         
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
-          <Link to="/about" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+          <Link to="/about" className={`text-sm font-medium transition-colors ${isActive('/about') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
             Qui sommes-nous ?
           </Link>
-          <Link to="/trips" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+          <Link to="/trips" className={`text-sm font-medium transition-colors ${isActive('/trips') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
             Rechercher
           </Link>
-          <Link to="/publish" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+          <Link to="/publish" className={`text-sm font-medium transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
             Publier un trajet
           </Link>
 
@@ -92,15 +95,21 @@ export function Navbar() {
                     className="absolute right-0 mt-3 w-56 p-2 bg-[#0e153a] border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-50"
                   >
                     <div className="px-3 py-2 border-b border-white/5 mb-2">
-                       <p className="text-xs text-white/40">Connecté en tant que</p>
-                       <p className="text-sm font-bold text-white truncate">{user?.email}</p>
+                       <p className="text-xs text-white/40 mb-1">Connecté en tant que</p>
+                       <p className="text-sm font-bold text-white truncate mb-1">{user?.email}</p>
+                       <span className="inline-block px-2 py-0.5 rounded-full bg-green-500/20 text-[10px] font-bold text-green-500 uppercase border border-green-500/20">
+                          {user?.role}
+                       </span>
                     </div>
 
                     {user?.role !== 'ADMIN' ? (
-                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-all text-sm">
+                      <Link 
+                        to="/profile"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-all text-sm"
+                      >
                         <User className="w-4 h-4" />
                         Mon Profil
-                      </button>
+                      </Link>
                     ) : (
                       <Link 
                         to="/admin" 
@@ -166,28 +175,31 @@ export function Navbar() {
                       <p className="text-white font-bold text-2xl mb-1 capitalize">
                         {user?.prenom} {user?.nom}
                       </p>
-                      <p className="text-white/40 text-sm">{user?.email}</p>
+                      <p className="text-white/40 text-sm mb-2">{user?.email}</p>
+                      <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-xs font-bold text-primary uppercase border border-primary/20">
+                        {user?.role}
+                      </span>
                     </div>
                   </div>
                 )}
 
                 <Link 
                   to="/about" 
-                  className="text-2xl font-bold text-white hover:text-primary transition-colors"
+                  className={`text-2xl font-bold transition-colors ${isActive('/about') ? 'text-primary' : 'text-white hover:text-primary'}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Qui sommes-nous ?
                 </Link>
                 <Link 
                   to="/trips" 
-                  className="text-2xl font-bold text-white hover:text-primary transition-colors"
+                  className={`text-2xl font-bold transition-colors ${isActive('/trips') ? 'text-primary' : 'text-white hover:text-primary'}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Rechercher un trajet
                 </Link>
                 <Link 
                   to="/publish" 
-                  className="text-2xl font-bold text-white hover:text-primary transition-colors"
+                  className={`text-2xl font-bold transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white hover:text-primary'}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Publier un trajet
@@ -196,7 +208,7 @@ export function Navbar() {
                 {isAuthenticated && user?.role !== 'ADMIN' && (
                   <Link 
                     to="/profile" 
-                    className="text-2xl font-bold text-white hover:text-primary transition-colors"
+                    className={`text-2xl font-bold transition-colors ${isActive('/profile') ? 'text-primary' : 'text-white hover:text-primary'}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Mon Profil
