@@ -1,6 +1,7 @@
 package com.ndajee.userservice.service;
 
 import com.ndajee.userservice.dto.UserResponse;
+import com.ndajee.userservice.entities.Admin;
 import com.ndajee.userservice.entities.Conducteur;
 import com.ndajee.userservice.entities.Passager;
 import com.ndajee.userservice.entities.Utilisateur;
@@ -63,7 +64,8 @@ public class AdminService {
 
     private String getRoleFromEntity(Utilisateur user) {
         if (user instanceof Passager) return "PASSAGER";
-        if (user instanceof Conducteur) return "CONDUCTEUR";
+        if (user instanceof Conducteur) return "DRIVER";
+        if (user instanceof Admin) return "ADMIN";
         return "INCONNU";
     }
 
@@ -74,7 +76,7 @@ public class AdminService {
         response.setNom(user.getNom());
         response.setEmail(user.getEmail());
         response.setTelephone(user.getTelephone());
-        response.setRole(role);
+        response.setRole(user.getRole());
         return response;
     }
 }
