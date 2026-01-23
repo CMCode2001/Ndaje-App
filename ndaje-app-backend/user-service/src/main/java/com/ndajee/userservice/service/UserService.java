@@ -143,7 +143,14 @@ public class UserService {
             throw ex;
         }
     }
-    // ...
+    /**
+     * Récupère un utilisateur par son ID.
+     */
+    public UserResponse getUserById(String id) {
+        Utilisateur user = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Utilisateur non trouvé."));
+        return mapToResponse(user, getRoleFromEntity(user));
+    }
     public TokenResponse login(LoginRequest request) {
         return keycloakService.login(request);
     }
