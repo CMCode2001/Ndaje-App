@@ -21,7 +21,10 @@ public class Trajet {
     private Long id;
 
     @Column(nullable = false)
-    private Long conducteurId;
+    private String driverId; // Changed from Long conducteurId to String for Keycloak integration
+
+    @Column(nullable = false)
+    private String vehicleId;
 
     @Column(nullable = false)
     private String depart;

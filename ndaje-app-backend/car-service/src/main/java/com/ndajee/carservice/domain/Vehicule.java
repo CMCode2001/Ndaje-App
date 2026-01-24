@@ -1,6 +1,8 @@
 package com.ndajee.carservice.domain;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,4 +22,13 @@ public class Vehicule {
     private String modele;
     private String immatriculation;
     private String couleur;
+
+    private int annee;
+    private int places;
+
+    @Enumerated(EnumType.STRING)
+    private StatutVerificationVehicule statutVerification;
+
+    // Keycloak User ID (Driver)
+    private String driverId;
 }

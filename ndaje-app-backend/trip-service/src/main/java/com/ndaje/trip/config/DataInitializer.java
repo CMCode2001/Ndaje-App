@@ -22,7 +22,8 @@ public class DataInitializer {
         return args -> {
             if (tripRepository.count() == 0) {
                 Trajet trip1 = Trajet.builder()
-                        .conducteurId(101L)
+                        .driverId("driver-1")
+                        .vehicleId("vehicle-1")
                         .depart("Guediawaye")
                         .arrivee("Plateau")
                         .dateDepart(LocalDateTime.now().plusDays(2))
@@ -32,7 +33,8 @@ public class DataInitializer {
                         .build();
 
                 Trajet trip2 = Trajet.builder()
-                        .conducteurId(102L)
+                        .driverId("driver-2")
+                        .vehicleId("vehicle-2")
                         .depart("Yoff")
                         .arrivee("Point-E")
                         .dateDepart(LocalDateTime.now().plusDays(5))

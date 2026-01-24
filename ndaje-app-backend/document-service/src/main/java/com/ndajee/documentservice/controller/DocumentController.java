@@ -15,7 +15,8 @@ import java.util.List;
 
 /**
  * Contrôleur REST pour la gestion des documents.
- * Expose les endpoints pour l'upload, le téléchargement, la liste et la suppression.
+ * Expose les endpoints pour l'upload, le téléchargement, la liste et la
+ * suppression.
  */
 @RestController
 @RequestMapping("/api/documents")
@@ -32,10 +33,13 @@ public class DocumentController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentResponse> uploadDocument(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("utilisateurId") String utilisateurId) {
-        
-        log.info("Upload request: file={}, user={}", file.getOriginalFilename(), utilisateurId);
-        DocumentResponse response = documentService.uploadDocument(file, utilisateurId);
+            @RequestParam("entityId") String entityId,
+            @RequestParam("typeDocument") String typeDocument,
+            @RequestParam("numero") String numero,
+            @RequestParam(value = "expiration", required = false) String expiration) {
+
+        log.info("Upload request: file={}, entity={}", file.getOriginalFilename(), entityId);
+        DocumentResponse response = documentService.uploadDocument(file, entityId, typeDocument, numero, expiration);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -46,7 +50,7 @@ public class DocumentController {
     @GetMapping("/{id}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) {
         log.info("Download request: documentId={}", id);
-        
+
         DocumentResponse metadata = documentService.getDocumentMetadata(id);
         byte[] fileData = documentService.downloadDocument(id);
 
@@ -76,13 +80,13 @@ public class DocumentController {
     @GetMapping
     public ResponseEntity<List<DocumentResponse>> getAllDocuments(
             @RequestParam(required = false) String utilisateurId) {
-        
+
         log.info("List documents request: utilisateurId={}", utilisateurId);
-        
+
         List<DocumentResponse> documents = utilisateurId != null
                 ? documentService.getDocumentsByUser(utilisateurId)
                 : documentService.getAllDocuments();
-        
+
         return ResponseEntity.ok(documents);
     }
 

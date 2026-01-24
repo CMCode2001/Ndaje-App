@@ -25,3 +25,8 @@ eureka:
     register-with-eureka: true
   instance:
     prefer-ip-address: true
+
+application:
+  config:
+    user-service-url: http://localhost:8082
+    trip-service-url: http://localhost:8084

@@ -21,64 +21,88 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TripController {
 
-    private final TripService tripService;
+        private final TripService tripService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<TripResponse>> createTrip(@Valid @RequestBody CreateTripRequest request) {
-        TripResponse tripResponse = tripService.createTrip(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.<TripResponse>builder()
-                        .success(true)
-                        .message("Trip created successfully")
-                        .data(tripResponse)
-                        .build());
-    }
+        @PostMapping
+        public ResponseEntity<ApiResponse<TripResponse>> createTrip(@Valid @RequestBody CreateTripRequest request) {
+                TripResponse tripResponse = tripService.createTrip(request);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Trip created successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<TripResponse>> getTripById(@PathVariable Long id) {
-        TripResponse tripResponse = tripService.getTripById(id);
-        return ResponseEntity.ok()
-                .body(ApiResponse.<TripResponse>builder()
-                        .success(true)
-                        .message("Trip retrieved successfully")
-                        .data(tripResponse)
-                        .build());
-    }
+        @GetMapping("/{id}")
+        public ResponseEntity<ApiResponse<TripResponse>> getTripById(@PathVariable Long id) {
+                TripResponse tripResponse = tripService.getTripById(id);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Trip retrieved successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<TripResponse>>> getAllTrips() {
-        List<TripResponse> trips = tripService.getAllTrips();
-        return ResponseEntity.ok()
-                .body(ApiResponse.<List<TripResponse>>builder()
-                        .success(true)
-                        .message("Trips retrieved successfully")
-                        .data(trips)
-                        .build());
-    }
+        @GetMapping
+        public ResponseEntity<ApiResponse<List<TripResponse>>> getAllTrips() {
+                List<TripResponse> trips = tripService.getAllTrips();
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<List<TripResponse>>builder()
+                                                .success(true)
+                                                .message("Trips retrieved successfully")
+                                                .data(trips)
+                                                .build());
+        }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<TripResponse>> updateTripStatus(
-            @PathVariable Long id,
-            @RequestParam StatutTrajet status) {
-        TripResponse tripResponse = tripService.updateTripStatus(id, status);
-        return ResponseEntity.ok()
-                .body(ApiResponse.<TripResponse>builder()
-                        .success(true)
-                        .message("Trip status updated successfully")
-                        .data(tripResponse)
-                        .build());
-    }
+        @PatchMapping("/{id}/status")
+        public ResponseEntity<ApiResponse<TripResponse>> updateTripStatus(
+                        @PathVariable Long id,
+                        @RequestParam StatutTrajet status) {
+                TripResponse tripResponse = tripService.updateTripStatus(id, status);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Trip status updated successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
 
-    @PostMapping("/{id}/decrement-seats")
-    public ResponseEntity<ApiResponse<TripResponse>> decrementSeats(
-            @PathVariable Long id,
-            @RequestParam int quantity) {
-        TripResponse tripResponse = tripService.decrementSeats(id, quantity);
-        return ResponseEntity.ok()
-                .body(ApiResponse.<TripResponse>builder()
-                        .success(true)
-                        .message("Seats decremented successfully")
-                        .data(tripResponse)
-                        .build());
-    }
+        @GetMapping("/driver/{driverId}")
+        public ResponseEntity<ApiResponse<List<TripResponse>>> getTripsByDriver(@PathVariable String driverId) {
+                List<TripResponse> trips = tripService.getTripsByDriverId(driverId);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<List<TripResponse>>builder()
+                                                .success(true)
+                                                .message("Trips retrieved successfully")
+                                                .data(trips)
+                                                .build());
+        }
+
+        @PutMapping("/{id}")
+        public ResponseEntity<ApiResponse<TripResponse>> updateTrip(
+                        @PathVariable Long id,
+                        @Valid @RequestBody com.ndaje.trip.dto.request.UpdateTripRequest request) {
+                TripResponse tripResponse = tripService.updateTrip(id, request);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Trip updated successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
+
+        @PostMapping("/{id}/decrement-seats")
+        public ResponseEntity<ApiResponse<TripResponse>> decrementSeats(
+                        @PathVariable Long id,
+                        @RequestParam int quantity) {
+                TripResponse tripResponse = tripService.decrementSeats(id, quantity);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Seats decremented successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
 }

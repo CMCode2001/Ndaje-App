@@ -19,6 +19,21 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public Vehicule createVehicule(Vehicule vehicule) {
+        if (vehicule.getDriverId() == null || vehicule.getDriverId().isBlank()) {
+            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwtToken) {
+                vehicule.setDriverId(jwtToken.getName());
+            }
+        }
+
+        if (vehicule.getDriverId() == null || vehicule.getDriverId().isBlank()) {
+            throw new RuntimeException("Driver ID is required and could not be determined from security context");
+        }
+
+        // Initialisation du statut de vérification
+        vehicule.setStatutVerification(com.ndajee.carservice.domain.StatutVerificationVehicule.EN_ATTENTE);
+
         return vehiculeRepository.save(vehicule);
     }
 
@@ -45,6 +60,12 @@ public class VehiculeServiceImpl implements VehiculeService {
     @Transactional(readOnly = true)
     public Optional<Vehicule> getVehiculeById(Long id) {
         return vehiculeRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vehicule> getVehiculesByDriverId(String driverId) {
+        return vehiculeRepository.findByDriverId(driverId);
     }
 
     @Override

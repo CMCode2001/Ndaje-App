@@ -1,7 +1,11 @@
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\dto\UpdateProfileRequest.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\ConducteurRepository.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\client\CarClient.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\config\DataInitializer.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\config\KeycloakConfig.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\UserServiceApplication.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\entities\Admin.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\AdminRepository.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\security\JwtAuthConverter.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\config\OpenApiConfig.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\dto\LogoutRequest.java
@@ -18,6 +22,7 @@ C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-ser
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\dto\UserRegistrationRequest.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\exception\ErrorResponse.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\dto\UserResponse.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\client\DocumentClient.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\service\KeycloakService.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\web\AdminController.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\UtilisateurRepository.java

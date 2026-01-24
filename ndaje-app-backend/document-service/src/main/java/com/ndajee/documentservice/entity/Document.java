@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 
 /**
  * Entité représentant un document stocké dans le système.
- * Contient les métadonnées du fichier et sa référence vers le stockage Cloudflare R2/S3.
+ * Contient les métadonnées du fichier et sa référence vers le stockage
+ * Cloudflare R2/S3.
  */
 @Entity
 @Table(name = "documents")
@@ -26,25 +27,42 @@ public class Document {
     @Column(nullable = false)
     private String nom;
 
-    /** Clé unique de l'objet dans le stockage Cloudflare R2 (ex: userId/uuid-filename) */
+    /**
+     * Clé unique de l'objet dans le stockage Cloudflare R2 (ex:
+     * userId/uuid-filename)
+     */
     @Column(nullable = false, unique = true)
     private String urlS3;
 
-    /** Type MIME du fichier (ex: application/pdf, image/jpeg) */
+    @Column(nullable = false)
+    private String numero;
+
+    private java.time.LocalDate expiration;
+
     @Column(nullable = false)
     private String type;
 
-    /** Taille du fichier en octets */
     @Column(nullable = false)
     private Long taille;
 
-    /** Date et heure de l'upload du document */
     @Column(nullable = false)
-    private LocalDateTime dateUpload;
+    private java.time.LocalDateTime dateUpload;
 
-    /** Identifiant de l'utilisateur (UUID Keycloak) propriétaire du document */
     @Column(nullable = false)
-    private String utilisateurId;
+    @Enumerated(EnumType.STRING)
+    private StatutDocument statutDocument;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TypeDocument typeDocument; // Renamed from 'type' to avoid confusion or keep 'type' if preferred, but
+                                       // diagram says 'type' references TypeDocument
+
+    // Generic Association
+    @Column(nullable = false)
+    private String entityId; // ID of User or Vehicle
+
+    @Column(nullable = false)
+    private String entityType; // "USER" or "VEHICLE"
 
     @PrePersist
     protected void onCreate() {

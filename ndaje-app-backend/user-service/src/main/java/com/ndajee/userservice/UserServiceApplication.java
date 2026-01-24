@@ -7,6 +7,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+@org.springframework.cloud.openfeign.EnableFeignClients
 @org.springframework.data.jpa.repository.config.EnableJpaAuditing
 public class UserServiceApplication {
 

@@ -85,3 +85,40 @@ Dans Postman :
 - **Stockage** : Cloudflare R2 (API compatible S3)
 - **BDD** : H2 (Dev) / PostgreSQL (Prod)
 - **Communication** : REST, Maven
+
+## User Stories
+
+### Conducteur (DRIVER)
+- **Créer un trajet** : En tant que conducteur, je veux publier un nouveau trajet avec un véhicule, un point de départ, une arrivée, une date et un prix.
+  - `POST /api/trips`
+- **Modifier un trajet** : En tant que conducteur, je veux mettre à jour les détails de mon trajet.
+  - `PUT /api/trips/{id}`
+- **Annuler un trajet** : (Non implémenté explicitement dans le contrôleur, mais `updateTripStatus` peut être utilisé)
+- **Consulter la liste de ses trajets** : En tant que conducteur, je veux voir l'historique de mes trajets proposés.
+  - `GET /api/trips/driver/{driverId}`
+
+### Passager (PASSENGER)
+- **Consulter les trajets disponibles** : En tant que passager, je veux voir les trajets disponibles.
+  - `GET /api/trips`
+- **Réserver un trajet** : En tant que passager, je veux réserver une ou plusieurs places sur un trajet.
+  - `POST /api/reservations`
+- **Consulter l'historique de ses réservations** : En tant que passager, je veux voir mes réservations passées et futures.
+  - `GET /api/reservations/passenger/{passengerId}`
+
+## Microservices Endpoints
+
+### User Service (Port 8082)
+- `POST /api/users/register/passenger`
+- `POST /api/users/register/driver`
+- `GET /api/users/{id}`
+
+### Trip Service (Port 8084)
+- `POST /api/trips` (Create Trip)
+- `GET /api/trips` (List All)
+- `GET /api/trips/{id}` (Get One)
+- `GET /api/trips/driver/{driverId}` (List by Driver)
+- `PUT /api/trips/{id}` (Update Trip)
+
+### Reservation Service (Port 8088)
+- `POST /api/reservations` (Create Reservation)
+- `GET /api/reservations/passenger/{passengerId}` (List by Passenger)

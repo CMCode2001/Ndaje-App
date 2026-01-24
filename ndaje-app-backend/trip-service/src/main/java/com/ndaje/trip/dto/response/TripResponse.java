@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class TripResponse {
     private Long id;
-    private Long conducteurId;
+    private String driverId;
+    private String vehicleId;
     private String depart;
     private String arrivee;
     private LocalDateTime dateDepart;

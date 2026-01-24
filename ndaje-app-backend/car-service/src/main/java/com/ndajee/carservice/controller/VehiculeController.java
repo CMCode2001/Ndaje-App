@@ -38,6 +38,11 @@ public class VehiculeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<Vehicule>> getVehiculesByDriverId(@PathVariable String driverId) {
+        return ResponseEntity.ok(vehiculeService.getVehiculesByDriverId(driverId));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVehicule(@PathVariable Long id) {
         vehiculeService.deleteVehicule(id);

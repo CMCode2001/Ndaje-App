@@ -7,6 +7,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+@org.springframework.cloud.openfeign.EnableFeignClients
 public class CarServiceApplication {
     public static void main(String[] args) {
         // Check for .env in current directory

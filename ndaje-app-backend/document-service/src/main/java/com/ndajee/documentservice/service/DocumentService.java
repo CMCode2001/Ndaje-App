@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 
 /**
  * Service métier orchestrant la gestion des documents.
- * Combine les opérations de base de données (métadonnées) et le stockage Cloudflare R2 (fichiers).
+ * Combine les opérations de base de données (métadonnées) et le stockage
+ * Cloudflare R2 (fichiers).
  */
 @Service
 @RequiredArgsConstructor
@@ -29,13 +30,16 @@ public class DocumentService {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     /**
-     * Effectue l'upload complet d'un document : stockage physique puis enregistrement en base.
-     * @param file Le fichier à uploader
+     * Effectue l'upload complet d'un document : stockage physique puis
+     * enregistrement en base.
+     * 
+     * @param file          Le fichier à uploader
      * @param utilisateurId L'ID du propriétaire
      * @return Les métadonnées du document sauvegardé
      */
     @Transactional
-    public DocumentResponse uploadDocument(MultipartFile file, String utilisateurId) {
+    public DocumentResponse uploadDocument(MultipartFile file, String entityId, String typeDocStr, String numero,
+            String expirationStr) {
         // Validate file
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Le fichier est vide");
@@ -46,7 +50,7 @@ public class DocumentService {
         }
 
         // Upload to S3
-        String s3Key = s3StorageService.uploadFile(file, utilisateurId);
+        String s3Key = s3StorageService.uploadFile(file, entityId);
 
         // Save metadata to database
         Document document = new Document();
@@ -54,16 +58,28 @@ public class DocumentService {
         document.setUrlS3(s3Key);
         document.setType(file.getContentType());
         document.setTaille(file.getSize());
-        document.setUtilisateurId(utilisateurId);
+
+        // New fields
+        document.setEntityId(entityId);
+        document.setEntityType("UNKNOWN");
+        document.setNumero(numero);
+
+        document.setStatutDocument(com.ndajee.documentservice.entity.StatutDocument.SOUMIS);
+        try {
+            document.setTypeDocument(com.ndajee.documentservice.entity.TypeDocument.valueOf(typeDocStr));
+        } catch (Exception e) {
+            document.setTypeDocument(com.ndajee.documentservice.entity.TypeDocument.IDENTITE);
+        }
 
         Document saved = documentRepository.save(document);
-        log.info("Document metadata saved: id={}, user={}", saved.getId(), utilisateurId);
+        log.info("Document metadata saved: id={}, entity={}", saved.getId(), entityId);
 
         return mapToResponse(saved);
     }
 
     /**
      * Récupère le contenu binaire d'un document.
+     * 
      * @param id Identifiant technique du document
      * @return Données du fichier
      */
@@ -94,16 +110,17 @@ public class DocumentService {
     }
 
     /**
-     * Liste les documents appartenant à un utilisateur spécifique.
+     * Liste les documents appartenant à un utilisateur ou véhicule spécifique.
      */
-    public List<DocumentResponse> getDocumentsByUser(String utilisateurId) {
-        return documentRepository.findByUtilisateurId(utilisateurId).stream()
+    public List<DocumentResponse> getDocumentsByUser(String entityId) {
+        return documentRepository.findByEntityId(entityId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     /**
      * Supprime un document : physique (R2) et logique (BDD).
+     * 
      * @param id ID du document à supprimer
      */
     @Transactional
@@ -120,14 +137,28 @@ public class DocumentService {
     }
 
     private DocumentResponse mapToResponse(Document document) {
-        return new DocumentResponse(
-                document.getId(),
-                document.getNom(),
-                document.getType(),
-                document.getTaille(),
-                document.getDateUpload(),
-                document.getUtilisateurId(),
-                document.getUrlS3()
-        );
+        DocumentResponse response = new DocumentResponse();
+        response.setId(document.getId());
+        response.setNom(document.getNom());
+        response.setType(document.getType());
+        response.setTaille(document.getTaille());
+
+        // Handle dateUpload if using PrePersist vs getter (assumes getter exists or
+        // field is public)
+        try {
+            // Reflection or getter if Lombok generated it
+            java.lang.reflect.Method getDate = document.getClass().getMethod("getDateUpload");
+            response.setDateUpload((java.time.LocalDateTime) getDate.invoke(document));
+        } catch (Exception e) {
+            // ignore
+        }
+
+        response.setEntityId(document.getEntityId());
+        response.setUrlS3(document.getUrlS3());
+        response.setNumero(document.getNumero());
+        response.setStatut(document.getStatutDocument().name());
+        response.setTypeDocument(document.getTypeDocument().name());
+
+        return response;
     }
 }
