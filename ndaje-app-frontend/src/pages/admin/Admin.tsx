@@ -15,6 +15,7 @@ interface UserResponse {
   telephone: string;
   role: string;
   active?: boolean;
+  actif?: boolean; // Backend field
   enabled?: boolean;
   dateCreation?: string;
 }
@@ -82,7 +83,7 @@ export default function AdminPage() {
       
       toast.success(currentStatus ? "Utilisateur désactivé" : "Utilisateur activé");
       // Update both active and enabled to be safe
-      setUsers(users.map(u => u.id === id ? { ...u, active: !currentStatus, enabled: !currentStatus } : u));
+      setUsers(users.map(u => u.id === id ? { ...u, active: !currentStatus, actif: !currentStatus, enabled: !currentStatus } : u));
     } catch {
       toast.error("Erreur", { description: "Impossible de modifier le statut." });
     }
@@ -108,8 +109,10 @@ export default function AdminPage() {
   };
 
   const getStatus = (user: UserResponse) => {
-    // Treat as active unless explicitly false in either field
-    return user.active !== false && user.enabled !== false;
+    // Check 'actif' first (backend standard), then fallback to others
+    if (typeof user.actif !== 'undefined') return user.actif;
+    if (typeof user.active !== 'undefined') return user.active;
+    return user.enabled !== false;
   };
 
   const getRoleLabel = (role: string) => {
