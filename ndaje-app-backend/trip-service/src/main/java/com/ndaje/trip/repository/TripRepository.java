@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trajet, Long> {
+    java.util.List<Trajet> findByDriverId(String driverId);
 }

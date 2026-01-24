@@ -12,9 +12,11 @@ import java.util.List;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     /**
-     * Récupère la liste des documents appartenant à un utilisateur spécifique.
-     * @param utilisateurId ID de l'utilisateur
+     * Récupère la liste des documents appartenant à une entité spécifique
+     * (Utilisateur ou Véhicule).
+     * 
+     * @param entityId ID de l'entité
      * @return Liste de documents
      */
-    List<Document> findByUtilisateurId(String utilisateurId);
+    List<Document> findByEntityId(String entityId);
 }

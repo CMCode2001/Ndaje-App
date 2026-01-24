@@ -29,16 +29,19 @@ public class RatingServiceImpl implements RatingService {
         Reservation reservation = reservationRepository.findById(request.getReservationId())
                 .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
-        if (!StatutReservation.COMPLETED.equals(reservation.getStatutReservation()) && 
-            !StatutReservation.CONFIRMED.equals(reservation.getStatutReservation())) {
-             // Assuming we can rate confirmed/completed trips, but usually only completed.
-             // For simplify, let's allow rating CONFIRMED trips as "finished" or strictly COMPLETED.
-             // Let's stick strictly to logic: if reservation is CANCELLED or PENDING, cannot rate.
+        if (!StatutReservation.COMPLETED.equals(reservation.getStatus()) &&
+                !StatutReservation.CONFIRMED.equals(reservation.getStatus())) {
+            // Assuming we can rate confirmed/completed trips, but usually only completed.
+            // For simplify, let's allow rating CONFIRMED trips as "finished" or strictly
+            // COMPLETED.
+            // Let's stick strictly to logic: if reservation is CANCELLED or PENDING, cannot
+            // rate.
         }
-        
-        // Check if already rated? Implementation choice. Assuming one rating per reservation.
+
+        // Check if already rated? Implementation choice. Assuming one rating per
+        // reservation.
         if (!ratingRepository.findByReservationId(request.getReservationId()).isEmpty()) {
-             throw new RatingNotAllowedException("Reservation already rated");
+            throw new RatingNotAllowedException("Reservation already rated");
         }
 
         Notation notation = Notation.builder()

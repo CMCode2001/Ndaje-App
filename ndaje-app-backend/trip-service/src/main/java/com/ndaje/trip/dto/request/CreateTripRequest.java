@@ -15,8 +15,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CreateTripRequest {
 
-    @NotNull(message = "Conducteur ID cannot be null")
-    private Long conducteurId;
+    private String driverId;
+
+    private String vehicleId;
 
     @NotBlank(message = "Depart cannot be blank")
     private String depart;

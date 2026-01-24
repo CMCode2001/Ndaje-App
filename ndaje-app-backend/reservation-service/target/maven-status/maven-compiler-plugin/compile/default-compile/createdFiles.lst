@@ -24,6 +24,5 @@ com\ndaje\reservation\repository\ReservationRepository.class
 com\ndaje\reservation\service\RatingService.class
 com\ndaje\reservation\dto\request\CreateRatingRequest.class
 com\ndaje\reservation\dto\response\ApiResponse$ApiResponseBuilder.class
-com\ndaje\reservation\client\TripServiceClient.class
 com\ndaje\reservation\service\impl\RatingServiceImpl.class
 com\ndaje\reservation\dto\request\CreateReservationRequest.class

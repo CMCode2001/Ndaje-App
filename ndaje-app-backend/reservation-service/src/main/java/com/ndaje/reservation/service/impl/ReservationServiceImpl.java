@@ -1,17 +1,18 @@
 package com.ndaje.reservation.service.impl;
 
-import com.ndaje.reservation.client.TripServiceClient;
-import com.ndaje.reservation.dto.request.CreateReservationRequest;
-import com.ndaje.reservation.dto.response.ApiResponse;
-import com.ndaje.reservation.dto.response.ReservationResponse;
-import com.ndaje.reservation.dto.response.TripAvailabilityResponse;
+import com.ndaje.reservation.client.TripClient;
+import com.ndaje.reservation.client.UserClient;
+import com.ndaje.reservation.dto.ApiResponse;
+import com.ndaje.reservation.dto.CreateReservationRequest;
+import com.ndaje.reservation.dto.ReservationResponse;
+import com.ndaje.reservation.dto.TripResponse;
 import com.ndaje.reservation.entity.Reservation;
 import com.ndaje.reservation.entity.StatutReservation;
-import com.ndaje.reservation.exception.ReservationNotFoundException;
-import com.ndaje.reservation.exception.TripFullException;
+import com.ndaje.reservation.exception.BusinessException;
 import com.ndaje.reservation.repository.ReservationRepository;
 import com.ndaje.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,83 +26,80 @@ import java.util.stream.Collectors;
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final TripServiceClient tripServiceClient;
+    private final UserClient userClient;
+    private final TripClient tripClient;
 
     @Override
     public ReservationResponse createReservation(CreateReservationRequest request) {
-        // 1. Try to decrement seats in TripService
-        // Assuming 1 seat per reservation for now
-        int seatsToBook = 1; 
-        
+        // 1. Validate Passenger
         try {
-            ApiResponse<TripAvailabilityResponse> decrementResponse = tripServiceClient.decrementSeats(request.getTripId(), seatsToBook);
-            
-            if (decrementResponse == null || !decrementResponse.isSuccess()) {
-                throw new TripFullException("Reservation pleine pour ce trajet");
-            }
+            userClient.getUserById(request.getPassengerId());
         } catch (Exception e) {
-             // If we get an error from the client (e.g. 400 Bad Request because seats are not enough), 
-             // we assume it is because the trip is full.
-             throw new TripFullException("Reservation pleine pour ce trajet");
+            throw new BusinessException("Invalid Passenger ID"); // Or UserService unavailable
         }
 
-        // 2. Create reservation if decrement was successful
+        // 2. Validate Trip and Check Availability via TripService
+        ResponseEntity<ApiResponse<TripResponse>> tripResponseWrapper;
+        try {
+            tripResponseWrapper = tripClient.getTripById(request.getTripId());
+        } catch (Exception e) {
+            throw new BusinessException("Invalid Trip ID or Trip Service unavailable");
+        }
+
+        if (tripResponseWrapper == null || tripResponseWrapper.getBody() == null
+                || !tripResponseWrapper.getBody().isSuccess()) {
+            throw new BusinessException("Trip not found");
+        }
+
+        TripResponse trip = tripResponseWrapper.getBody().getData();
+
+        if (trip.getPlacesDisponibles() < request.getPlaces()) {
+            throw new BusinessException("Not enough seats available");
+        }
+
+        // 3. Decrement Seats in TripService
+        // Ideally this should be a distributed transaction (Saga), but for now we call
+        // immediately.
+        // If save fails later, we might have decremented seats without booking.
+        // Better: decrement seats first, if success, save reservation. If save fails,
+        // compensate (increment).
+        // For simplicity: Call decrement. If it fails, it throws.
+
+        try {
+            tripClient.decrementSeats(request.getTripId(), request.getPlaces());
+        } catch (Exception e) {
+            throw new BusinessException("Failed to book seats in Trip Service");
+        }
+
+        // 4. Save Reservation
         Reservation reservation = Reservation.builder()
+                .passengerId(request.getPassengerId())
                 .tripId(request.getTripId())
-                .passagerId(request.getPassagerId())
-                .dateReservation(LocalDateTime.now())
-                .statutReservation(StatutReservation.CONFIRMED)
+                .places(request.getPlaces())
+                .reservationDate(LocalDateTime.now())
+                .status(StatutReservation.CONFIRMED)
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
-
-        return mapToReservationResponse(savedReservation);
+        return mapToResponse(savedReservation);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ReservationResponse getReservationById(Long id) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found with id: " + id));
-        return mapToReservationResponse(reservation);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ReservationResponse> getReservationsByPassager(Long passagerId) {
-        return reservationRepository.findByPassagerId(passagerId).stream()
-                .map(this::mapToReservationResponse)
+    public List<ReservationResponse> getReservationsByPassengerId(String passengerId) {
+        return reservationRepository.findByPassengerId(passengerId).stream()
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public ReservationResponse updateReservationStatus(Long id, StatutReservation status) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found with id: " + id));
-        reservation.setStatutReservation(status);
-        Reservation updatedReservation = reservationRepository.save(reservation);
-        return mapToReservationResponse(updatedReservation);
-    }
-
-    @Override
-    public List<TripAvailabilityResponse> getAvailableTrips() {
-        ApiResponse<List<TripAvailabilityResponse>> response = tripServiceClient.getAllTrips();
-        if (response != null && response.isSuccess()) {
-             // Filter trips with available seats > 0
-            return response.getData().stream()
-                    .filter(t -> t.getPlacesDisponibles() > 0)
-                    .collect(Collectors.toList());
-        }
-        return List.of();
-    }
-
-    private ReservationResponse mapToReservationResponse(Reservation reservation) {
+    private ReservationResponse mapToResponse(Reservation reservation) {
         return ReservationResponse.builder()
                 .id(reservation.getId())
+                .passengerId(reservation.getPassengerId())
                 .tripId(reservation.getTripId())
-                .passagerId(reservation.getPassagerId())
-                .dateReservation(reservation.getDateReservation())
-                .statutReservation(reservation.getStatutReservation())
+                .places(reservation.getPlaces())
+                .reservationDate(reservation.getReservationDate())
+                .status(reservation.getStatus())
                 .build();
     }
 }

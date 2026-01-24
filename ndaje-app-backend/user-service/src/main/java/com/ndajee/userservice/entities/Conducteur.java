@@ -14,4 +14,7 @@ public class Conducteur extends Utilisateur {
 
     @Enumerated(EnumType.STRING)
     private StatutConducteur statut;
+
+    private String permis;
+    private double noteMoyenne;
 }
