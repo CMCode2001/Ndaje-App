@@ -5,10 +5,26 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Clock, Smile } from "lucide-react";
 import HeroImage from "@/assets/svg/1.svg";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [typedText, setTypedText] = useState("");
+  const fullText = "Voyagez mieux, ensemble.";
 
+  useEffect(() => {
+    let index = 0;
+    const typingInterval = setInterval(() => {
+      if (index <= fullText.length) {
+        setTypedText(fullText.slice(0, index));
+        index++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 80);
+
+    return () => clearInterval(typingInterval);
+  }, []);
 
   const fadeInLeft = {
     initial: { opacity: 0, x: -60 },
@@ -42,19 +58,67 @@ export function LandingPage() {
       
       {/* Hero Section */}
       <main className="flex-1 flex flex-col justify-center px-4 pt-20 pb-20 relative overflow-hidden">
-        {/* Background Decorative Elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050814] to-[#1BA3EF] opacity-95 pointer-events-none" />
+        {/* Animated Background Gradient */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 0.3, scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl pointer-events-none" 
+          animate={{
+            background: [
+              "linear-gradient(135deg, #011706ff 0%, #232200ff 100%)",
+              "linear-gradient(135deg, #330700ff 0%, #1f0856ff 100%)",
+              "linear-gradient(135deg, #1f0856ff 0%, #050814 100%)",
+              "linear-gradient(135deg, #050814 0%, #1BA3EF 100%)",
+            ]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 opacity-95"
+        />
+        
+        {/* Floating Particles */}
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-white rounded-full opacity-30"
+            initial={{
+              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
+            }}
+            animate={{
+              y: [null, Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000)],
+              x: [null, Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000)],
+              scale: [1, 1.5, 1],
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+
+        {/* Glowing Orbs with Pulse */}
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full blur-3xl pointer-events-none" 
         />
         <motion.div 
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 0.2, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
-          className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" 
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500 rounded-full blur-3xl pointer-events-none" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.15, 1],
+            opacity: [0.15, 0.35, 0.15],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400 rounded-full blur-3xl pointer-events-none" 
         />
 
         <div className="container mx-auto px-4 relative z-10">
@@ -68,8 +132,20 @@ export function LandingPage() {
                 src={HeroImage} 
                 alt="Voyagez ensemble" 
                 className="w-full max-w-lg xl:max-w-xl drop-shadow-2xl"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
+                animate={{ 
+                  y: [0, -20, 0],
+                  rotateY: [0, 5, 0, -5, 0]
+                }}
+                transition={{ 
+                  duration: 6, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+                whileHover={{ 
+                  scale: 1.08,
+                  rotateY: 10,
+                  transition: { duration: 0.3 }
+                }}
               />
             </motion.div>
 
@@ -79,15 +155,32 @@ export function LandingPage() {
               className="flex-1 space-y-8"
             >
               <div className="space-y-6 text-center lg:text-left">
-                <motion.h1 
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="text-4xl md:text-6xl lg:text-7xl font-bold fontLogo tracking-tight text-white drop-shadow-lg leading-tight"
-                >
-                  Voyagez mieux,<br />
-                  <span className="bg-gradient-to-r from-primary to-blue-300 bg-clip-text text-transparent">ensemble.</span>
-                </motion.h1>
+                <div className="relative">
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="text-4xl md:text-6xl lg:text-7xl font-bold fontLogo tracking-tight text-white drop-shadow-lg leading-tight"
+                  >
+                    {typedText.split(",")[0]}
+                    {typedText.includes(",") && ","}
+                    <br />
+                    {typedText.includes("ensemble") && (
+                      <motion.span 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-gradient-to-r from-primary via-blue-300 to-purple-400 bg-clip-text text-transparent"
+                      >
+                        {typedText.split(",")[1]}
+                      </motion.span>
+                    )}
+                    <motion.span
+                      animate={{ opacity: [1, 0, 1] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                      className="inline-block ml-1 w-1 h-12 md:h-16 lg:h-20 bg-primary align-middle"
+                    />
+                  </motion.h1>
+                </div>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

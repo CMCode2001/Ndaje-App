@@ -30,9 +30,15 @@ export function Connexion({ onToggleAuth }: ConnexionProps) {
         description: "Ravi de vous revoir sur Ndaje !",
       });
     } catch (error) {
-      toast.error("Erreur de connexion", {
-        description: "Email ou mot de passe incorrect.",
-      });
+      if (error instanceof Error && error.message === "Compte désactivé") {
+        toast.error("Accès refusé", {
+          description: "Votre compte est verrouillé ! , contactez le support client...",
+        });
+      } else {
+        toast.error("Erreur de connexion", {
+          description: "Email ou mot de passe incorrect.",
+        });
+      }
       console.error(error);
     } finally {
       setIsLoading(false);

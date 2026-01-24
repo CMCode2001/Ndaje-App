@@ -152,6 +152,16 @@ public class UserService {
         return mapToResponse(user, getRoleFromEntity(user));
     }
     public TokenResponse login(LoginRequest request) {
+        // Vérifier si l'utilisateur existe et est actif dans la base de données locale
+        Utilisateur user = utilisateurRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessException("Email ou mot de passe incorrect."));
+        
+        // Vérifier si le compte est actif
+        if (!user.isActif()) {
+            throw new BusinessException("Compte désactivé");
+        }
+        
+        // Procéder à l'authentification Keycloak
         return keycloakService.login(request);
     }
 
