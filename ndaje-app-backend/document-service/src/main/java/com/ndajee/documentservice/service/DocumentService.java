@@ -38,7 +38,8 @@ public class DocumentService {
      * @return Les métadonnées du document sauvegardé
      */
     @Transactional
-    public DocumentResponse uploadDocument(MultipartFile file, String entityId, String typeDocStr, String numero,
+    public DocumentResponse uploadDocument(MultipartFile file, String entityId, String entityType, String typeDocStr,
+            String numero,
             String expirationStr) {
         // Validate file
         if (file.isEmpty()) {
@@ -61,8 +62,16 @@ public class DocumentService {
 
         // New fields
         document.setEntityId(entityId);
-        document.setEntityType("UNKNOWN");
+        document.setEntityType(entityType);
         document.setNumero(numero);
+
+        if (expirationStr != null && !expirationStr.isBlank()) {
+            try {
+                document.setExpiration(java.time.LocalDate.parse(expirationStr));
+            } catch (Exception e) {
+                log.warn("Failed to parse expiration date: {}", expirationStr);
+            }
+        }
 
         document.setStatutDocument(com.ndajee.documentservice.entity.StatutDocument.SOUMIS);
         try {
@@ -112,8 +121,12 @@ public class DocumentService {
     /**
      * Liste les documents appartenant à un utilisateur ou véhicule spécifique.
      */
-    public List<DocumentResponse> getDocumentsByUser(String entityId) {
-        return documentRepository.findByEntityId(entityId).stream()
+    public List<DocumentResponse> getDocumentsByUser(String entityId, String entityType) {
+        List<Document> docs = (entityType != null)
+                ? documentRepository.findByEntityIdAndEntityType(entityId, entityType)
+                : documentRepository.findByEntityId(entityId);
+
+        return docs.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -158,6 +171,7 @@ public class DocumentService {
         response.setNumero(document.getNumero());
         response.setStatut(document.getStatutDocument().name());
         response.setTypeDocument(document.getTypeDocument().name());
+        response.setExpiration(document.getExpiration());
 
         return response;
     }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -14,8 +15,10 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Service de bas niveau gérant les interactions directes avec le stockage Cloudflare R2 (API compatible S3).
- * S'occupe de l'upload, du téléchargement et de la suppression physique des fichiers.
+ * Service de bas niveau gérant les interactions directes avec le stockage
+ * Cloudflare R2 (API compatible S3).
+ * S'occupe de l'upload, du téléchargement et de la suppression physique des
+ * fichiers.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,8 +32,10 @@ public class S3StorageService {
 
     /**
      * Upload un fichier vers Cloudflare R2 et génère une clé unique.
-     * @param file Fichier multipart à uploader
-     * @param utilisateurId ID de l'utilisateur pour l'organisation des dossiers dans R2
+     * 
+     * @param file          Fichier multipart à uploader
+     * @param utilisateurId ID de l'utilisateur pour l'organisation des dossiers
+     *                      dans R2
      * @return Clé unique de l'objet stocké (S3 Key)
      * @throws StorageException en cas d'erreur de lecture ou d'accès S3
      */
@@ -55,21 +60,25 @@ public class S3StorageService {
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
-            
+
             log.info("File uploaded successfully to S3: {}", s3Key);
             return s3Key;
-            
+
         } catch (IOException e) {
             log.error("Failed to read file: {}", originalFilename, e);
             throw new StorageException("Erreur lors de la lecture du fichier", e);
-        } catch (S3Exception e) {
-            log.error("S3 error while uploading file: {}", s3Key, e);
-            throw new StorageException("Erreur lors de l'upload vers S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (SdkException e) {
+            String errorMessage = (e instanceof S3Exception s3e && s3e.awsErrorDetails() != null)
+                    ? s3e.awsErrorDetails().errorMessage()
+                    : e.getMessage();
+            log.error("AWS SDK error while uploading file {}: {}", s3Key, errorMessage, e);
+            throw new StorageException("Erreur lors de l'upload vers S3: " + errorMessage, e);
         }
     }
 
     /**
      * Télécharge le contenu d'un fichier depuis Cloudflare R2.
+     * 
      * @param s3Key Clé unique du fichier
      * @return Tableau d'octets contenant les données du fichier
      * @throws StorageException si le fichier n'existe pas ou en cas d'erreur réseau
@@ -84,18 +93,22 @@ public class S3StorageService {
             byte[] data = s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
             log.info("File downloaded successfully from S3: {}", s3Key);
             return data;
-            
+
         } catch (NoSuchKeyException e) {
             log.error("File not found in S3: {}", s3Key);
             throw new StorageException("Fichier introuvable dans S3: " + s3Key);
-        } catch (S3Exception e) {
-            log.error("S3 error while downloading file: {}", s3Key, e);
-            throw new StorageException("Erreur lors du téléchargement depuis S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (SdkException e) {
+            String errorMessage = (e instanceof S3Exception s3e && s3e.awsErrorDetails() != null)
+                    ? s3e.awsErrorDetails().errorMessage()
+                    : e.getMessage();
+            log.error("AWS SDK error while downloading file {}: {}", s3Key, errorMessage, e);
+            throw new StorageException("Erreur lors du téléchargement depuis S3: " + errorMessage, e);
         }
     }
 
     /**
      * Supprime un fichier du stockage Cloudflare R2.
+     * 
      * @param s3Key Clé unique du fichier à supprimer
      * @throws StorageException en cas d'échec de la suppression
      */
@@ -108,10 +121,13 @@ public class S3StorageService {
 
             s3Client.deleteObject(deleteObjectRequest);
             log.info("File deleted successfully from S3: {}", s3Key);
-            
-        } catch (S3Exception e) {
-            log.error("S3 error while deleting file: {}", s3Key, e);
-            throw new StorageException("Erreur lors de la suppression du fichier S3: " + e.awsErrorDetails().errorMessage(), e);
+
+        } catch (SdkException e) {
+            String errorMessage = (e instanceof S3Exception s3e && s3e.awsErrorDetails() != null)
+                    ? s3e.awsErrorDetails().errorMessage()
+                    : e.getMessage();
+            log.error("AWS SDK error while deleting file {}: {}", s3Key, errorMessage, e);
+            throw new StorageException("Erreur lors de la suppression du fichier S3: " + errorMessage, e);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.ndajee.documentservice.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,7 +31,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> handleMaxSizeException(MaxUploadSizeExceededException ex) {
         log.error("File size exceeded: {}", ex.getMessage());
-        return buildErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE, "La taille du fichier dépasse la limite autorisée (10MB)");
+        return buildErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE,
+                "La taille du fichier dépasse la limite autorisée (10MB)");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -39,10 +41,18 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDataAccessException(DataAccessException ex) {
+        log.error("Database error: {}", ex.getMessage(), ex);
+        String details = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur de base de données: " + details);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Une erreur inattendue s'est produite");
+        log.error("Unexpected error: {} [{}]", ex.getMessage(), ex.getClass().getName(), ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Une erreur inattendue s'est produite: " + ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String message) {

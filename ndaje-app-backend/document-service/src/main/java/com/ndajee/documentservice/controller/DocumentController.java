@@ -34,12 +34,14 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> uploadDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam("entityId") String entityId,
+            @RequestParam("entityType") String entityType,
             @RequestParam("typeDocument") String typeDocument,
             @RequestParam("numero") String numero,
             @RequestParam(value = "expiration", required = false) String expiration) {
 
-        log.info("Upload request: file={}, entity={}", file.getOriginalFilename(), entityId);
-        DocumentResponse response = documentService.uploadDocument(file, entityId, typeDocument, numero, expiration);
+        log.info("Upload request: file={}, entity={}, type={}", file.getOriginalFilename(), entityId, entityType);
+        DocumentResponse response = documentService.uploadDocument(file, entityId, entityType, typeDocument, numero,
+                expiration);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -79,12 +81,13 @@ public class DocumentController {
      */
     @GetMapping
     public ResponseEntity<List<DocumentResponse>> getAllDocuments(
-            @RequestParam(required = false) String utilisateurId) {
+            @RequestParam(required = false) String entityId,
+            @RequestParam(required = false) String entityType) {
 
-        log.info("List documents request: utilisateurId={}", utilisateurId);
+        log.info("List documents request: entityId={}, type={}", entityId, entityType);
 
-        List<DocumentResponse> documents = utilisateurId != null
-                ? documentService.getDocumentsByUser(utilisateurId)
+        List<DocumentResponse> documents = entityId != null
+                ? documentService.getDocumentsByUser(entityId, entityType)
                 : documentService.getAllDocuments();
 
         return ResponseEntity.ok(documents);

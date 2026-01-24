@@ -30,8 +30,10 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(fo -> fo.disable()))
                 .authorizeHttpRequests(ar -> ar
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/vehicules/**").permitAll() // On laisse l'accès libre pour le moment, ou on sécurise
+                                                                      
+                        //On laisse l'accès libre pour le moment, ou on sécurise
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                                                          // 
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o2 -> o2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)))
                 .build();

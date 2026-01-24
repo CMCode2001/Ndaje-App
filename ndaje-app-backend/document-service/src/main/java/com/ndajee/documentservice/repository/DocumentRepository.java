@@ -19,4 +19,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      * @return Liste de documents
      */
     List<Document> findByEntityId(String entityId);
+
+    List<Document> findByEntityIdAndEntityType(String entityId, String entityType);
 }
