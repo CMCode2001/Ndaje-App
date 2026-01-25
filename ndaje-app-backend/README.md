@@ -11,7 +11,9 @@ Ndaje App est une plateforme de covoiturage moderne utilisant une architecture m
 | **Eureka Server** | 8761 | Service Discovery |
 | **User Service** | 8082 | Gestion des profils, inscriptions et admin |
 | **Document Service** | 8086 | Gestion des documents (Kyc, Permis) via R2 |
-| **Trip Service** | 8084 | Gestion des trajets et réservations |
+| **Trip Service** | 8084 | Gestion des trajets |
+| **Reservation Service** | 8088 | Gestion des réservations |
+| **Car Service** | 8083 | Gestion des véhicules |
 
 ## Installation & Démarrage
 
@@ -48,7 +50,25 @@ Utilisez le script batch fourni à la racine :
 - `GET /api/documents?utilisateurId=...` : Liste par utilisateur
 
 ### Trip Service
-- `GET /api/trips/hello` : Test de connectivité
+- `GET /api/trips` : Liste tous les trajets
+- `POST /api/trips` : Créer un trajet
+- `GET /api/trips/{id}` : Détails d'un trajet
+- `PUT /api/trips/{id}` : Modifier un trajet
+- `GET /api/trips/driver/{driverId}` : Trajets par conducteur
+- `POST /api/trips/{id}/decrement-seats` : Réserver des places (Interne)
+- `POST /api/trips/{id}/increment-seats` : Libérer des places (Interne)
+
+### Reservation Service
+- `POST /api/reservations` : Créer une réservation
+- `GET /api/reservations/passenger/{passengerId}` : Historique passager
+- `PUT /api/reservations/{id}` : Modifier une réservation (places)
+- `PATCH /api/reservations/{id}/cancel` : Annuler une réservation
+
+### Car Service
+- `POST /api/vehicules` : Ajouter un véhicule
+- `GET /api/vehicules/driver/{driverId}` : Véhicules par conducteur
+- `PUT /api/vehicules/{id}` : Modifier un véhicule
+- `DELETE /api/vehicules/{id}` : Supprimer un véhicule
 
 ---
 
@@ -118,7 +138,105 @@ Dans Postman :
 - `GET /api/trips/{id}` (Get One)
 - `GET /api/trips/driver/{driverId}` (List by Driver)
 - `PUT /api/trips/{id}` (Update Trip)
+- `POST /api/trips/{id}/decrement-seats` (Internal)
+- `POST /api/trips/{id}/increment-seats` (Internal)
 
 ### Reservation Service (Port 8088)
-- `POST /api/reservations` (Create Reservation)
-- `GET /api/reservations/passenger/{passengerId}` (List by Passenger)
+- `POST /api/reservations` (Create)
+- `GET /api/reservations/passenger/{passengerId}` (History)
+- `PUT /api/reservations/{id}` (Update)
+- `PATCH /api/reservations/{id}/cancel` (Cancel)
+
+### Car Service (Port 8083)
+- `POST /api/vehicules` (Create)
+- `GET /api/vehicules/driver/{driverId}` (List by Driver)
+- `PUT /api/vehicules/{id}` (Update)
+- `DELETE /api/vehicules/{id}` (Delete)
+
+---
+
+## Consommation Frontend
+
+### 1. Authentification
+Toutes les requêtes (sauf login/register) nécessitent un Header `Authorization`.
+
+**Exemple Axios :**
+```javascript
+const api = axios.create({
+  baseURL: 'http://localhost:9000/api'
+});
+
+// Joindre le token à chaque requête
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+### 2. Récupération des Trajets (`/api/trips`)
+La réponse inclut désormais les informations du conducteur pour éviter des appels supplémentaires.
+
+**Structure de l'objet `data` :**
+```json
+{
+  "id": 1,
+  "driverId": "uuid-keycloak",
+  "driverFirstName": "Jean",
+  "driverLastName": "Dupont",
+  "driverPhone": "+22177...",
+  "depart": "Dakar",
+  "arrivee": "Saint-Louis",
+  "dateDepart": "2026-01-25T10:00:00",
+  "placesDisponibles": 3,
+  "prix": 5000.0,
+  "statutTrajet": "CREATED"
+}
+```
+
+### 3. Publication de Trajet (`POST /api/trips`)
+Nécessite le rôle `DRIVER`. L'ID du véhicule doit être un ID existant appartenant au conducteur.
+
+**Exemple de Body (JSON) :**
+```json
+{
+  "depart": "Guediawaye",
+  "arrivee": "Plateau",
+  "dateDepart": "2026-02-01T08:00:00",
+  "placesDisponibles": 4,
+  "prix": 1500,
+  "vehicleId": "1"
+}
+```
+*Note : `driverId` est extrait automatiquement du token JWT si non fourni.*
+
+### 4. Historique des Réservations (`/api/reservations/passenger/{id}`)
+La réponse inclut les détails du trajet réservé.
+
+**Structure de l'objet `data` (Liste) :**
+```json
+[
+  {
+    "id": 10,
+    "tripId": 1,
+    "depart": "Dakar",
+    "arrivee": "Saint-Louis",
+    "dateDepart": "2026-01-25T10:00:00",
+    "reservationDate": "2026-01-24T18:00:00",
+    "places": 2,
+    "status": "CONFIRMED"
+  }
+]
+```
+
+### 4. Gestion des Erreurs
+Le backend renvoie des messages d'erreur explicites en cas d'échec (ex: dépassement de capacité).
+```json
+{
+  "success": false,
+  "message": "Available seats (6) cannot exceed vehicle capacity (4)",
+  "data": null
+}
+```
