@@ -1,7 +1,5 @@
 package com.ndaje.reservation.controller;
 
-import com.ndaje.reservation.dto.ApiResponse;
-import com.ndaje.reservation.dto.ReservationResponse;
 import com.ndaje.reservation.service.ReservationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
