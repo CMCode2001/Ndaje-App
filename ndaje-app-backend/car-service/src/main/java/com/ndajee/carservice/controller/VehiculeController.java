@@ -1,8 +1,12 @@
 package com.ndajee.carservice.controller;
 
-import com.ndajee.carservice.domain.Vehicule;
+import com.ndajee.carservice.dto.VehiculeRequest;
+import com.ndajee.carservice.dto.VehiculeResponse;
+import org.springframework.http.MediaType;
+import com.ndajee.carservice.dto.DocumentResponse;
 import com.ndajee.carservice.service.VehiculeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,29 +21,30 @@ public class VehiculeController {
     private final VehiculeService vehiculeService;
 
     @PostMapping
-    public ResponseEntity<Vehicule> createVehicule(@RequestBody Vehicule vehicule) {
-        return new ResponseEntity<>(vehiculeService.createVehicule(vehicule), HttpStatus.CREATED);
+    public ResponseEntity<VehiculeResponse> createVehicule(@RequestBody VehiculeRequest vehiculeRequest) {
+        return new ResponseEntity<>(vehiculeService.createVehicule(vehiculeRequest), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vehicule> updateVehicule(@PathVariable Long id, @RequestBody Vehicule vehicule) {
-        return ResponseEntity.ok(vehiculeService.updateVehicule(id, vehicule));
+    public ResponseEntity<VehiculeResponse> updateVehicule(@PathVariable Long id,
+            @RequestBody VehiculeRequest vehiculeRequest) {
+        return ResponseEntity.ok(vehiculeService.updateVehicule(id, vehiculeRequest));
     }
 
     @GetMapping
-    public ResponseEntity<List<Vehicule>> getAllVehicules() {
+    public ResponseEntity<List<VehiculeResponse>> getAllVehicules() {
         return ResponseEntity.ok(vehiculeService.getAllVehicules());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Vehicule> getVehiculeById(@PathVariable Long id) {
-        return vehiculeService.getVehiculeById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<VehiculeResponse> getVehiculeById(@PathVariable Long id) {
+        return ResponseEntity.ok(vehiculeService.getVehiculeById(id)
+                .orElseThrow(() -> new com.ndajee.carservice.exception.ResourceNotFoundException(
+                        "Vehicule not found with id: " + id)));
     }
 
     @GetMapping("/driver/{driverId}")
-    public ResponseEntity<List<Vehicule>> getVehiculesByDriverId(@PathVariable String driverId) {
+    public ResponseEntity<List<VehiculeResponse>> getVehiculesByDriverId(@PathVariable String driverId) {
         return ResponseEntity.ok(vehiculeService.getVehiculesByDriverId(driverId));
     }
 
@@ -47,5 +52,21 @@ public class VehiculeController {
     public ResponseEntity<Void> deleteVehicule(@PathVariable Long id) {
         vehiculeService.deleteVehicule(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentResponse> uploadDocument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("typeDocument") String typeDocument,
+            @RequestParam("numero") String numero,
+            @RequestParam(value = "expiration", required = false) String expiration) {
+        return new ResponseEntity<>(vehiculeService.uploadDocument(id, file, typeDocument, numero, expiration),
+                HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<List<DocumentResponse>> getVehiculeDocuments(@PathVariable Long id) {
+        return ResponseEntity.ok(vehiculeService.getVehiculeDocuments(id));
     }
 }

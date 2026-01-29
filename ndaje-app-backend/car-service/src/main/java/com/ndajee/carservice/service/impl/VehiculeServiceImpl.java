@@ -1,9 +1,16 @@
 package com.ndajee.carservice.service.impl;
 
+import com.ndajee.carservice.client.DocumentClient;
 import com.ndajee.carservice.domain.Vehicule;
+import com.ndajee.carservice.dto.DocumentResponse;
+import com.ndajee.carservice.dto.VehiculeRequest;
+import com.ndajee.carservice.dto.VehiculeResponse;
+import com.ndajee.carservice.mapper.VehiculeMapper;
 import com.ndajee.carservice.repository.VehiculeRepository;
 import com.ndajee.carservice.service.VehiculeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+import com.ndajee.carservice.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +23,13 @@ import java.util.Optional;
 public class VehiculeServiceImpl implements VehiculeService {
 
     private final VehiculeRepository vehiculeRepository;
+    private final DocumentClient documentClient;
+    private final VehiculeMapper vehiculeMapper;
 
     @Override
-    public Vehicule createVehicule(Vehicule vehicule) {
+    public VehiculeResponse createVehicule(VehiculeRequest vehiculeRequest) {
+        Vehicule vehicule = vehiculeMapper.toEntity(vehiculeRequest);
+
         if (vehicule.getDriverId() == null || vehicule.getDriverId().isBlank()) {
             org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
                     .getContext().getAuthentication();
@@ -34,43 +45,58 @@ public class VehiculeServiceImpl implements VehiculeService {
         // Initialisation du statut de vérification
         vehicule.setStatutVerification(com.ndajee.carservice.domain.StatutVerificationVehicule.EN_ATTENTE);
 
-        return vehiculeRepository.save(vehicule);
+        return vehiculeMapper.toResponse(vehiculeRepository.save(vehicule));
     }
 
     @Override
-    public Vehicule updateVehicule(Long id, Vehicule vehicule) {
+    public VehiculeResponse updateVehicule(Long id, VehiculeRequest vehiculeRequest) {
         return vehiculeRepository.findById(id)
                 .map(existingVehicule -> {
-                    existingVehicule.setMarque(vehicule.getMarque());
-                    existingVehicule.setModele(vehicule.getModele());
-                    existingVehicule.setImmatriculation(vehicule.getImmatriculation());
-                    existingVehicule.setCouleur(vehicule.getCouleur());
-                    existingVehicule.setStatutVerification(vehicule.getStatutVerification());
-                    return vehiculeRepository.save(existingVehicule);
+                    vehiculeMapper.updateEntityFromRequest(vehiculeRequest, existingVehicule);
+                    Vehicule saved = vehiculeRepository.save(existingVehicule);
+                    return vehiculeMapper.toResponse(saved);
                 })
-                .orElseThrow(() -> new RuntimeException("Vehicule not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Vehicule> getAllVehicules() {
-        return vehiculeRepository.findAll();
+    public List<VehiculeResponse> getAllVehicules() {
+        return vehiculeMapper.toResponseList(vehiculeRepository.findAll());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Vehicule> getVehiculeById(Long id) {
-        return vehiculeRepository.findById(id);
+    public Optional<VehiculeResponse> getVehiculeById(Long id) {
+        return vehiculeRepository.findById(id).map(vehiculeMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Vehicule> getVehiculesByDriverId(String driverId) {
-        return vehiculeRepository.findByDriverId(driverId);
+    public List<VehiculeResponse> getVehiculesByDriverId(String driverId) {
+        return vehiculeMapper.toResponseList(vehiculeRepository.findByDriverId(driverId));
     }
 
     @Override
     public void deleteVehicule(Long id) {
         vehiculeRepository.deleteById(id);
+    }
+
+    @Override
+    public DocumentResponse uploadDocument(Long vehiculeId, MultipartFile file, String typeDocument, String numero,
+            String expiration) {
+        vehiculeRepository.findById(vehiculeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId));
+
+        return documentClient.uploadDocument(file, String.valueOf(vehiculeId), "VEHICLE", typeDocument, numero,
+                expiration);
+    }
+
+    @Override
+    public List<DocumentResponse> getVehiculeDocuments(Long vehiculeId) {
+        if (!vehiculeRepository.existsById(vehiculeId)) {
+            throw new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId);
+        }
+        return documentClient.getDocumentsByEntity(String.valueOf(vehiculeId), "VEHICLE");
     }
 }

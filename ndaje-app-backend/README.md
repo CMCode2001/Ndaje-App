@@ -11,6 +11,8 @@ Ndaje App est une plateforme de covoiturage moderne utilisant une architecture m
 | **Eureka Server** | 8761 | Service Discovery |
 | **User Service** | 8082 | Gestion des profils, inscriptions et admin |
 | **Document Service** | 8086 | Gestion des documents (Kyc, Permis) via R2 |
+| **Trip Service** | 8084 | Gestion des trajets et réservations |
+| **Car Service** | 8089 | Gestion des véhicules et documents justificatifs |
 | **Trip Service** | 8084 | Gestion des trajets |
 | **Reservation Service** | 8088 | Gestion des réservations |
 | **Car Service** | 8083 | Gestion des véhicules |
@@ -69,6 +71,14 @@ Utilisez le script batch fourni à la racine :
 - `GET /api/vehicules/driver/{driverId}` : Véhicules par conducteur
 - `PUT /api/vehicules/{id}` : Modifier un véhicule
 - `DELETE /api/vehicules/{id}` : Supprimer un véhicule
+
+### Car Service
+- `POST /api/vehicules` : Créer un véhicule (Statut initial: `EN_ATTENTE`)
+- `GET /api/vehicules` : Liste tous les véhicules
+- `GET /api/vehicules/{id}` : Détails d'un véhicule
+- `GET /api/vehicules/driver/{driverId}` : Liste par conducteur
+- `POST /api/vehicules/{id}/documents` : Upload document justificatif (Carte Grise, Assurance)
+- `GET /api/vehicules/{id}/documents` : Liste des documents d'un véhicule
 
 ---
 
@@ -262,3 +272,12 @@ Le backend renvoie des messages d'erreur explicites en cas d'échec (ex: dépass
   "data": null
 }
 ```
+- `POST /api/reservations` (Create Reservation)
+- `GET /api/reservations/passenger/{passengerId}` (List by Passenger)
+
+### Car Service (Port 8089)
+- `POST /api/vehicules` (Create Vehicle)
+- `GET /api/vehicules` (List All)
+- `GET /api/vehicules/driver/{driverId}` (List by Driver)
+- `POST /api/vehicules/{id}/documents` (Upload Doc)
+- `GET /api/vehicules/{id}/documents` (List Docs)

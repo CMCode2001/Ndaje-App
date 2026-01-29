@@ -1,19 +1,27 @@
 package com.ndajee.carservice.service;
 
-import com.ndajee.carservice.domain.Vehicule;
+import com.ndajee.carservice.dto.VehiculeRequest;
+import com.ndajee.carservice.dto.VehiculeResponse;
+import com.ndajee.carservice.dto.DocumentResponse;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Optional;
 
 public interface VehiculeService {
-    Vehicule createVehicule(Vehicule vehicule);
+    VehiculeResponse createVehicule(VehiculeRequest vehiculeRequest);
 
-    Vehicule updateVehicule(Long id, Vehicule vehicule);
+    VehiculeResponse updateVehicule(Long id, VehiculeRequest vehiculeRequest);
 
-    List<Vehicule> getAllVehicules();
+    List<VehiculeResponse> getAllVehicules();
 
-    Optional<Vehicule> getVehiculeById(Long id);
+    Optional<VehiculeResponse> getVehiculeById(Long id);
 
-    List<Vehicule> getVehiculesByDriverId(String driverId);
+    List<VehiculeResponse> getVehiculesByDriverId(String driverId);
 
     void deleteVehicule(Long id);
+
+    DocumentResponse uploadDocument(Long vehiculeId, MultipartFile file, String typeDocument, String numero,
+            String expiration);
+
+    List<DocumentResponse> getVehiculeDocuments(Long vehiculeId);
 }
