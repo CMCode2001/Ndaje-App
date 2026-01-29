@@ -33,13 +33,24 @@ export function SidebarItem({ icon: Icon, label, active, variant, onClick }: Sid
   );
 }
 
-import { Users, Car, Shield, Settings, LogOut, Home } from "lucide-react";
+import { Shield, Settings, LogOut, Home, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  activeView?: 'users' | 'verifications';
+  onViewChange?: (view: 'users' | 'verifications') => void;
+}
+
+export function AdminSidebar({ activeView = 'users', onViewChange }: AdminSidebarProps) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Tableau de bord", view: 'users' },
+    { icon: Shield, label: "Vérifications", view: 'verifications' },
+    { icon: Settings, label: "Paramètres", view: 'settings' },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -54,10 +65,20 @@ export function AdminSidebar() {
       </div>
       
       <div className="space-y-2 flex-1">
-        <SidebarItem icon={Users} label="Utilisateurs" active />
-        <SidebarItem icon={Car} label="Trajets" />
-        <SidebarItem icon={Shield} label="Vérifications" />
-        <SidebarItem icon={Settings} label="Paramètres" />
+        {menuItems.map((item, index) => (
+          <SidebarItem 
+            key={index}
+            icon={item.icon} 
+            label={item.label} 
+            active={activeView === item.view}
+            onClick={() => {
+                if (item.view === 'settings') return; // Not implemented
+                if (onViewChange && (item.view === 'users' || item.view === 'verifications')) {
+                    onViewChange(item.view);
+                }
+            }}
+          />
+        ))}
       </div>
 
       <div className="space-y-2 pt-6 border-t border-white/5">

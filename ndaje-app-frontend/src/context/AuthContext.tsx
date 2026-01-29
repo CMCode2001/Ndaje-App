@@ -8,6 +8,7 @@ interface User {
   nom: string;
   telephone: string;
   role: 'PASSENGER' | 'DRIVER' | 'ADMIN';
+  vehicles?: any[];
 }
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ interface AuthContextType {
   register: (data: any, role: 'passenger' | 'driver') => Promise<void>;
   updateUser: (data: Partial<User>) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const decoded = decodeJWT(token);
       const realmRoles = decoded?.realm_access?.roles || [];
       const detectedRole = realmRoles.find((r: string) => ['ADMIN', 'DRIVER', 'PASSAGER', 'PASSENGER'].includes(r)) || fullUserData.role || '';
-      const normalizedRole = detectedRole === 'PASSENGER' ? 'PASSAGER' : detectedRole;
+      const normalizedRole = detectedRole === 'PASSAGER' ? 'PASSENGER' : detectedRole;
 
       const sessionUser = {
         ...fullUserData,
@@ -100,8 +102,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Assurer que les champs de base sont présents
         prenom: fullUserData.prenom || decoded?.given_name || '',
         nom: fullUserData.nom || decoded?.family_name || '',
-        email: fullUserData.email || decoded?.email || ''
+        email: fullUserData.email || decoded?.email || '',
+        vehicles: []
       };
+
+      if (sessionUser.role === 'DRIVER') {
+          try {
+              await fetch(`${BASE_URL_USERS.replace('/users', '/vehicules')}`, { // Assuming /api/vehicules relative to base
+                  headers: { 'Authorization': `Bearer ${token}` }
+              });
+              // Better: use the constant or simple path /api/vehicules
+               const vehiclesResponse2 = await fetch(`/api/vehicules`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (vehiclesResponse2.ok) {
+                  const allVehicles = await vehiclesResponse2.json();
+                  const vehicles = Array.isArray(allVehicles) 
+                    ? allVehicles.filter((v: any) => v.driverId === userId || v.userId === userId) 
+                    : [];
+                  sessionUser.vehicles = vehicles;
+              }
+          } catch (e) {
+              console.warn("Could not fetch vehicles", e);
+          }
+      }
 
       setUser(sessionUser);
       setToken(token);
@@ -122,24 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       const result = await response.json().catch(() => ({}));
+      console.log("Register Response:", result);
 
       if (!response.ok) {
         throw new Error(result.message || 'Erreur lors de l’inscription');
       }
 
-      const token = result.accessToken || result.token;
-      const userId = result.id || result.user?.id || (token ? decodeJWT(token)?.sub : null);
-      const userData = result.user || result.data || result;
-      const sessionUser = {
-        ...userData,
-        id: userId,
-        role: (userData.role || '').toUpperCase()
-      };
-
-      setUser(sessionUser);
-      setToken(token);
-      localStorage.setItem('user', JSON.stringify(sessionUser));
-      if (token) localStorage.setItem('token', token);
+      if (!response.ok) {
+        throw new Error(result.message || 'Erreur lors de l’inscription');
+      }
+      
+      // No auto-login, just return success
+      return;
     } finally {
       setIsLoading(false);
     }
@@ -190,8 +209,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
   };
 
+  const refreshUser = async () => {
+    if (!token || !user?.id) return;
+    setIsLoading(true);
+    try {
+        // 1. Fetch Profile
+        let fullUserData = user; 
+        try {
+            const profileResponse = await fetch(`${BASE_URL_USERS}/${user.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (profileResponse.ok) {
+                fullUserData = await profileResponse.json();
+            }
+        } catch (err) {
+            console.warn("Could not fetch full profile", err);
+        }
+
+        // 2. Fetch Vehicles if Driver
+        let vehicles: any[] = [];
+        if (fullUserData.role === 'DRIVER') {
+             try {
+                const vehiclesResponse = await fetch(`/api/vehicules`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (vehiclesResponse.ok) {
+                    const allData = await vehiclesResponse.json();
+                    vehicles = Array.isArray(allData) 
+                        ? allData.filter((v: any) => v.driverId === user.id || v.userId === user.id)
+                        : [];
+                }
+            } catch (e) {
+                console.warn("Could not fetch vehicles", e);
+            }
+        }
+
+        const sessionUser = {
+            ...fullUserData,
+            id: user.id,
+            role: user.role, // Keep existing role logic or re-evaluate if needed
+            vehicles: vehicles
+        };
+        
+        setUser(sessionUser);
+        localStorage.setItem('user', JSON.stringify(sessionUser));
+
+    } catch (error) {
+        console.error("Error refreshing user", error);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, isLoading, login, register, updateUser, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user && !!token, isLoading, login, register, updateUser, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

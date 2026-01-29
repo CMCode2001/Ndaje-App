@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Menu, X, User, LogOut, LayoutDashboard, ChevronDown, Ticket } from "lucide-react";
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -55,9 +55,16 @@ export function Navbar() {
           <Link to="/trips" className={`text-sm font-medium transition-colors ${isActive('/trips') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
             Rechercher
           </Link>
-          <Link to="/publish" className={`text-sm font-medium transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
-            Publier un trajet
-          </Link>
+          {isAuthenticated && user?.role === 'PASSENGER' && (
+            <Link to="/my-reservations" className={`text-sm font-medium transition-colors ${isActive('/my-reservations') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
+              Mes réservations
+            </Link>
+          )}
+          {isAuthenticated && (user?.role === 'DRIVER' || user?.role === 'ADMIN') && (
+            <Link to="/publish" className={`text-sm font-medium transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white/70 hover:text-white'}`}>
+              Publier un trajet
+            </Link>
+          )}
 
           {!isAuthenticated ? (
             <Link to="/auth">
@@ -118,6 +125,16 @@ export function Navbar() {
                         <LayoutDashboard className="w-4 h-4" />
                         Espace Admin
                       </Link>
+                    )}
+
+                    {isAuthenticated && user?.role === 'PASSENGER' && (
+                        <Link 
+                            to="/my-reservations"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-all text-sm mt-1"
+                        >
+                            <Ticket className="w-4 h-4" />
+                            Mes Réservations
+                        </Link>
                     )}
 
                     <button 
@@ -197,13 +214,15 @@ export function Navbar() {
                 >
                   Rechercher un trajet
                 </Link>
-                <Link 
-                  to="/publish" 
-                  className={`text-2xl font-bold transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white hover:text-primary'}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Publier un trajet
-                </Link>
+                {isAuthenticated && (user?.role === 'DRIVER' || user?.role === 'ADMIN') && (
+                  <Link 
+                    to="/publish" 
+                    className={`text-2xl font-bold transition-colors ${isActive('/publish') ? 'text-primary' : 'text-white hover:text-primary'}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Publier un trajet
+                  </Link>
+                )}
                 
                 {isAuthenticated && user?.role !== 'ADMIN' && (
                   <Link 
@@ -212,6 +231,16 @@ export function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Mon Profil
+                  </Link>
+                )}
+
+                {isAuthenticated && user?.role === 'PASSENGER' && (
+                  <Link 
+                    to="/my-reservations" 
+                    className={`text-2xl font-bold transition-colors ${isActive('/my-reservations') ? 'text-primary' : 'text-white hover:text-primary'}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Mes Réservations
                   </Link>
                 )}
 

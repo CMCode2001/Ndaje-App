@@ -52,8 +52,16 @@ export default defineConfig({
         target: 'http://localhost:9000',
         changeOrigin: true,
       },
+      '/api/trips': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
+      '/api/vehicules': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+      },
       '/api/reservations': {
-        target: 'http://localhost:8096',
+        target: 'http://localhost:9000',
         changeOrigin: true,
       }
     }

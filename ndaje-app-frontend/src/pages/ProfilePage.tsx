@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Phone, Mail, Shield, Save, CheckCircle2, Menu } from "lucide-react";
+import { User, Phone, Mail, Shield, Save, CheckCircle2, Menu, Car } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { VehicleService } from "@/services/VehicleService";
+import { Link } from "react-router-dom";
 
 export function ProfilePage() {
-  const { user, updateUser, isLoading: isAuthLoading, token } = useAuth();
-  const [activeTab, setActiveTab] = useState<'general' | 'security'>('general');
+  const { user, updateUser, logout, isLoading: isAuthLoading, token } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'general' | 'security' | 'vehicle'>('general');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [vehicle, setVehicle] = useState<any>(null);
   const [formData, setFormData] = useState({
     prenom: user?.prenom || "",
     nom: user?.nom || "",
@@ -40,6 +45,13 @@ export function ProfilePage() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
+        if (response.status === 401) {
+            toast.error("Session expirée. Veuillez vous reconnecter.");
+            logout();
+            navigate("/auth");
+            return;
+        }
+
         if (response.ok) {
           const data = await response.json();
           setFormData({
@@ -48,21 +60,32 @@ export function ProfilePage() {
             email: data.email || "",
             telephone: data.telephone || "",
           });
-        } else {
-          setFormData({
-            prenom: user.prenom || "",
-            nom: user.nom || "",
-            email: user.email || "",
-            telephone: user.telephone || "",
-          });
         }
       } catch (err) {
         console.error("Fetch error:", err);
       }
     };
 
+    const fetchVehicle = async () => {
+        if (!user?.id || !token || user.role !== 'DRIVER') return;
+        try {
+             // Assuming endpoint returns list, we take the first one or logic to display list? Prompt said "un autre champ pour qu'il voit son vehicule ajouté GET: /api/vehicules"
+             // Assuming list based on typical context but prompt implies "son vehicule" (singular) but POST creates one. Let's assume list.
+             const data = await VehicleService.getMyVehicles(token);
+             if (Array.isArray(data)) {
+                 const myVehicles = data.filter((v: any) => v.driverId === user.id || v.userId === user.id);
+                 if (myVehicles.length > 0) {
+                    setVehicle(myVehicles[0]);
+                 }
+             }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     fetchFullProfile();
-  }, [user?.id, token]);
+    fetchVehicle();
+  }, [user?.id, token, user?.role]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -80,7 +103,7 @@ export function ProfilePage() {
     }
   };
 
-  const handleTabChange = (tab: 'general' | 'security') => {
+  const handleTabChange = (tab: 'general' | 'security' | 'vehicle') => {
     setActiveTab(tab);
     setShowMobileMenu(false);
   };
@@ -164,7 +187,7 @@ export function ProfilePage() {
                 <div className="flex items-center gap-3">
                   {activeTab === 'general' ? <User className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
                   <span className="font-semibold text-sm">
-                    {activeTab === 'general' ? 'Informations Personnelles' : 'Sécurité et Mot de passe'}
+                    {activeTab === 'general' ? 'Informations Personnelles' : activeTab === 'vehicle' ? 'Mon Véhicule' : 'Sécurité et Mot de passe'}
                   </span>
                 </div>
                 <Menu className="w-5 h-5" />
@@ -189,6 +212,19 @@ export function ProfilePage() {
                       <User className="w-5 h-5" />
                       <span className="font-semibold text-sm">Informations Personnelles</span>
                     </button>
+                    {user?.role === 'DRIVER' && (
+                        <button 
+                          onClick={() => handleTabChange('vehicle')}
+                          className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 border ${
+                            activeTab === 'vehicle' 
+                              ? "bg-primary/10 border-primary/20 text-white shadow-lg" 
+                              : "bg-white/5 border-white/5 text-white/40"
+                          }`}
+                        >
+                          <Car className="w-5 h-5" />
+                          <span className="font-semibold text-sm">Mon Véhicule</span>
+                        </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -207,6 +243,20 @@ export function ProfilePage() {
                 <User className="w-5 h-5" />
                 <span className="font-semibold">Informations Personnelles</span>
               </button>
+              
+              {user?.role === 'DRIVER' && (
+                <button 
+                    onClick={() => setActiveTab('vehicle')}
+                    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 border ${
+                    activeTab === 'vehicle' 
+                        ? "bg-primary/10 border-primary/20 text-white shadow-lg" 
+                        : "bg-white/5 border-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                    }`}
+                >
+                    <Car className="w-5 h-5" />
+                    <span className="font-semibold">Mon Véhicule</span>
+                </button>
+              )}
 
               <div className="p-5 md:p-6 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 mt-8">
                 <div className="flex items-center gap-3 mb-3 md:mb-4">
@@ -312,6 +362,55 @@ export function ProfilePage() {
                       </Button>
                     </div>
                   </div>
+                ) : activeTab === 'vehicle' ? (
+                     <div className="space-y-6 md:space-y-8">
+                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                           <div>
+                             <h2 className="text-xl md:text-2xl font-bold mb-1">Mon Véhicule</h2>
+                             <p className="text-white/40 text-xs md:text-sm">Gérez les informations de votre véhicule.</p>
+                           </div>
+                           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                             <Car className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                           </div>
+                         </div>
+ 
+                         {vehicle ? (
+                             <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-6">
+                                 <div className="flex items-center gap-4 border-b border-white/10 pb-6">
+                                     <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                                         <Car className="w-8 h-8 text-primary" />
+                                     </div>
+                                     <div>
+                                         <h3 className="text-xl font-bold text-white mb-1">{vehicle.marque} {vehicle.modele}</h3>
+                                         <p className="text-white/50 bg-white/5 px-2 py-0.5 rounded text-sm inline-block">{vehicle.immatriculation}</p>
+                                     </div>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                         <p className="text-white/40 text-xs mb-1">Couleur</p>
+                                         <p className="font-medium">{vehicle.couleur}</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-white/40 text-xs mb-1">Année</p>
+                                         <p className="font-medium">{vehicle.annee}</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-white/40 text-xs mb-1">Places</p>
+                                         <p className="font-medium">{vehicle.places}</p>
+                                     </div>
+                                 </div>
+                             </div>
+                         ) : (
+                             <div className="text-center py-10">
+                                 <Car className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                                 <h3 className="text-lg font-medium text-white mb-2">Aucun véhicule enregistré</h3>
+                                 <p className="text-white/40 mb-6">Vous devez ajouter un véhicule pour publier des trajets.</p>
+                                 <Link to="/register-vehicle">
+                                     <Button className="bg-primary text-white">Ajouter un véhicule</Button>
+                                 </Link>
+                             </div>
+                         )}
+                     </div>
                 ) : (
                   <div className="space-y-6 md:space-y-8">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">

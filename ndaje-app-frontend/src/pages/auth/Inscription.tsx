@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Phone, Car, Users, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface InscriptionProps {
   onToggleAuth: () => void;
@@ -15,7 +14,6 @@ export function Inscription({ onToggleAuth }: InscriptionProps) {
   const { register } = useAuth();
   const [role, setRole] = useState<"passenger" | "driver">("passenger");
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
@@ -30,9 +28,10 @@ export function Inscription({ onToggleAuth }: InscriptionProps) {
     setIsLoading(true);
     try {
       await register(formData, role);
-      navigate("/");
+      // Remove navigate("/") and use onToggleAuth to switch to login form
+      onToggleAuth();
       toast.success("Inscription réussie !", {
-        description: `Bienvenue parmi nous, ${formData.prenom} ${formData.nom}.`,
+        description: `Compte créé avec succès. Veuillez vous connecter.`,
       });
     } catch (error) {
       toast.error("Erreur d'inscription", {

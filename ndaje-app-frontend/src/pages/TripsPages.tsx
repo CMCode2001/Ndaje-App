@@ -1,102 +1,197 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, AlertCircle, Loader2, Filter, X, Calendar, DollarSign, Users, Map as MapIcon, Phone, Ticket } from "lucide-react";
+import { MapPin, AlertCircle, Loader2, Filter, X, Calendar, Users, Map as MapIcon, Ticket, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BASE_URL_RESERVATION } from "@/api/api";
+import { fetchAvailableTrips, type Trip } from "@/api/api";
+import { ReservationService } from "@/services/ReservationService";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import Illustration from "@/assets/svg/2.svg";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import Whatsapp from "@/assets/img/icons8-whatsapp.gif";
+import { Share2 } from "lucide-react";
 
-// Fix for default marker icons in Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
-
-interface Trip {
-  id: number;
-  conducteurId: number;
-  depart: string;
-  arrivee: string;
-  dateDepart: string;
-  placesDisponibles: number;
-  prix: number;
-}
-
-interface ApiResponse {
-  success: boolean;
-  message: string;
-  data: Trip[];
-}
+// Custom Marker Creator
+const createCustomIcon = (type: 'depart' | 'arrivee' = 'depart') => {
+  const color = type === 'depart' ? '#1ba3ef' : '#111b42';
+  return L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div style="
+      background-color: ${color}; 
+      width: 14px; 
+      height: 14px; 
+      border-radius: 50%; 
+      border: 2px solid white; 
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    "></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -7]
+  });
+};
 
 interface FilterState {
   depart: string;
   arrivee: string;
   date: string;
-  maxPrice: string;
-  minSeats: string;
 }
 
 export function TripsPages() {
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     depart: "",
     arrivee: "",
-    date: "",
-    maxPrice: "",
-    minSeats: ""
+    date: ""
   });
 
+  const { user, token, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [bookingLoading, setBookingLoading] = useState<any | null>(null);
+  const [bookingMessage, setBookingMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<Record<string, number>>({});
+
+  // Sync search params with filters
   useEffect(() => {
-    const fetchTrips = async () => {
-      try {
-        const response = await fetch(`${BASE_URL_RESERVATION}/trips/available`);
-        if (!response.ok) {
-           throw new Error("Impossible de récupérer les trajets");
-        }
-        const apiResponse: ApiResponse = await response.json();
-        if (apiResponse.success) {
-            setTrips(apiResponse.data);
-            setFilteredTrips(apiResponse.data);
-        } else {
-            throw new Error(apiResponse.message || "Erreur inconnue");
-        }
-      } catch (err) {
-        console.error("API Error:", err);
-         // Fallback Mock Data
-        const mockData = [
-          { id: 4, conducteurId: 104, depart: "Guediawaye", arrivee: "Plateau", dateDepart: "2026-02-22T05:53:00", prix: 1200, placesDisponibles: 4 },
-          { id: 5, conducteurId: 105, depart: "Yoff", arrivee: "Point-E", dateDepart: "2026-02-25T05:53:00", prix: 1000, placesDisponibles: 3 },
-        ];
-        setTrips(mockData);
-        setFilteredTrips(mockData);
-      } finally {
-        setLoading(false);
-      }
+    const departParam = searchParams.get("depart");
+    const arriveeParam = searchParams.get("arrivee");
+    const dateParam = searchParams.get("date");
+
+    if (departParam || arriveeParam || dateParam) {
+      setFilters({
+        depart: departParam || "",
+        arrivee: arriveeParam || "",
+        date: dateParam || ""
+      });
+      // Automatically open filters if something is pre-filled
+      setShowFilters(true);
+    }
+  }, [searchParams]);
+
+  const handleShare = async (trip: Trip) => {
+    const shareData = {
+      title: 'Voyage Ndaje App',
+      text: `Rejoignez-moi pour ce trajet de ${trip.depart} à ${trip.arrivee} le ${new Date(trip.dateDepart).toLocaleDateString('fr-FR')} !`,
+      url: window.location.href,
     };
 
-    fetchTrips();
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast.info("Lien du trajet copié dans le presse-papier !");
+      }
+    } catch (err) {
+      console.log('Error sharing', err);
+    }
+  };
+
+  const fetchTripsData = async () => {
+    console.log("Fetching trips data...");
+    setLoading(true);
+    setBookingMessage(null);
+    try {
+      const response = await fetchAvailableTrips();
+      console.log("API Response:", response);
+      // Handle both wrapped and unwrapped response
+      const data = Array.isArray(response) ? response : (response.data || []);
+      const success = Array.isArray(response) ? true : response.success;
+
+      console.log("Parsed Data:", data, "Success:", success);
+
+      if (success) {
+        console.log("Setting trips:", data);
+        setTrips(data);
+      } else {
+        const msg = (response as any).message || "Erreur inconnue";
+        console.error("API success false:", msg);
+        throw new Error(msg);
+      }
+    } catch (err: any) {
+      console.error("API Error caught:", err);
+      setError(err.message || "Une erreur est survenue");
+      // Fallback Mock Data
+      const mockData: Trip[] = [
+        { id: 4, driverId: 104, depart: "Guediawaye", arrivee: "Plateau", dateDepart: "2026-02-22T05:53:00", prix: 1200, placesDisponibles: 4 },
+        { id: 5, driverId: 105, depart: "Yoff", arrivee: "Point-E", dateDepart: "2026-02-25T05:53:00", prix: 1000, placesDisponibles: 3 },
+      ];
+      setTrips(mockData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  useEffect(() => {
+    fetchTripsData();
   }, []);
 
-  // Apply filters
-  useEffect(() => {
-    let result = [...trips];
+  const handleReserve = async (tripId: any) => {
+    if (!isAuthenticated) {
+      toast.error("Veuillez vous connecter pour réserver un trajet");
+      navigate("/auth");
+      return;
+    }
 
+    const nbPlaces = selectedSeats[tripId] || 1;
+    
+    setBookingLoading(tripId);
+    setBookingMessage(null);
+    try {
+      const response = await ReservationService.createReservation({
+        tripId: Number(tripId),
+        passengerId: String(user?.id),
+        places: nbPlaces
+      }, token || "");
+
+      const success = response.success !== undefined ? response.success : true;
+
+      if (success) {
+        setBookingMessage({ type: 'success', text: "Réservation effectuée avec succès ! Redirection..." });
+        toast.success("Réservation confirmée !");
+        
+        // Brief delay for the user to see the success state
+        setTimeout(() => {
+            navigate("/my-reservations");
+        }, 1500);
+
+        // Refresh trips anyway in case redirect fails or is slow
+        fetchTripsData();
+      } else {
+        setBookingMessage({ type: 'error', text: response.message || "Erreur lors de la réservation" });
+        toast.error(response.message || "Erreur lors de la réservation");
+      }
+    } catch (err: any) {
+      if (err.message?.includes("401") || err.status === 401) {
+          toast.error("Session expirée");
+          logout();
+          navigate("/auth");
+      } else {
+          setBookingMessage({ type: 'error', text: err.message || "Une erreur est survenue" });
+          toast.error(err.message || "Une erreur est survenue");
+      }
+    } finally {
+      setBookingLoading(null);
+    }
+  };
+
+  // Reactive filtering using useMemo
+  const filteredTrips = useMemo(() => {
+    // 1. D'abord filtrer les trajets complets
+    let result = trips.filter(trip => trip.placesDisponibles > 0);
+
+    // 2. Appliquer les filtres de recherche
     if (filters.depart) {
       result = result.filter(trip => 
         trip.depart.toLowerCase().includes(filters.depart.toLowerCase())
@@ -116,24 +211,14 @@ export function TripsPages() {
       });
     }
 
-    if (filters.maxPrice) {
-      result = result.filter(trip => trip.prix <= parseInt(filters.maxPrice));
-    }
-
-    if (filters.minSeats) {
-      result = result.filter(trip => trip.placesDisponibles >= parseInt(filters.minSeats));
-    }
-
-    setFilteredTrips(result);
+    return result;
   }, [filters, trips]);
 
   const resetFilters = () => {
     setFilters({
       depart: "",
       arrivee: "",
-      date: "",
-      maxPrice: "",
-      minSeats: ""
+      date: ""
     });
   };
 
@@ -152,18 +237,39 @@ export function TripsPages() {
     show: { opacity: 1, y: 0 }
   };
 
-  // Mock coordinates for Senegalese cities
+  // Case-insensitive coordinate database (keys in lowercase)
   const cityCoordinates: Record<string, [number, number]> = {
-    "Dakar": [14.6928, -17.4467],
-    "Saint-Louis": [16.0179, -16.4897],
-    "Thiès": [14.7886, -16.9260],
-    "Touba": [14.8500, -15.8833],
-    "Mbour": [14.4167, -16.9667],
-    "Kaolack": [14.1333, -16.0667],
-    "Guediawaye": [14.7667, -17.4000],
-    "Plateau": [14.6708, -17.4381],
-    "Yoff": [14.7500, -17.4833],
-    "Point-E": [14.7167, -17.4667]
+    "dakar": [14.6928, -17.4467],
+    "saint-louis": [16.0179, -16.4897],
+    "thies": [14.7886, -16.9260],
+    "thiès": [14.7886, -16.9260],
+    "touba": [14.8500, -15.8833],
+    "mbour": [14.4167, -16.9667],
+    "kaolack": [14.1333, -16.0667],
+    "guediawaye": [14.7667, -17.4000],
+    "guédiawaye": [14.7667, -17.4000],
+    "pikine": [14.7500, -17.3833],
+    "rufisque": [14.7167, -17.2667],
+    "ziguinchor": [12.5833, -16.2667],
+    "diourbel": [14.6500, -16.2333],
+    "louga": [15.6167, -16.2167],
+    "tambacounda": [13.7667, -13.6667],
+    "kolda": [12.8833, -14.9500],
+    "matam": [15.6500, -13.3333],
+    "fatick": [14.3333, -16.4000],
+    "kaffrine": [14.1000, -15.5500],
+    "kédougou": [12.5500, -12.1833],
+    "sédhiou": [12.7000, -15.5500],
+    "plateau": [14.6708, -17.4381],
+    "yoff": [14.7500, -17.4833],
+    "point-e": [14.7167, -17.4667],
+    "almadies": [14.7475, -17.5147],
+    "parcelles assainies": [14.7523, -17.4394]
+  };
+
+  const getCoords = (cityName: string) => {
+    if (!cityName) return null;
+    return cityCoordinates[cityName.toLowerCase().trim()] || null;
   };
 
   return (
@@ -181,35 +287,89 @@ export function TripsPages() {
 
       <main className="flex-1 pt-32 pb-20 container mx-auto px-4 relative z-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div className="space-y-2">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-primary text-xs font-bold uppercase tracking-wider">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 md:mb-12 gap-6">
+          <div className="space-y-3">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-primary text-[10px] md:text-xs font-bold uppercase tracking-wider">
                {filteredTrips.length} Trajet{filteredTrips.length > 1 ? 's' : ''} disponible{filteredTrips.length > 1 ? 's' : ''}
              </div>
-             <h1 className="text-3xl md:text-5xl font-bold text-brand-dark">
+             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark leading-tight">
                Où allez-vous <span className="text-primary">aujourd'hui ?</span>
              </h1>
-             <p className="text-gray-500 max-w-xl">
+             <p className="text-gray-500 max-w-xl text-sm md:text-base">
                Explorez les meilleurs trajets au meilleur prix. Conduisez moins, partagez plus.
              </p>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 md:gap-3 w-full lg:w-auto">
+             <AnimatePresence>
+               {(filters.depart || filters.arrivee || filters.date) && (
+                 <motion.div
+                   initial={{ opacity: 0, x: 20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   exit={{ opacity: 0, x: 20 }}
+                 >
+                   <Button 
+                     variant="ghost" 
+                     className="gap-2 rounded-xl h-12 text-red-500 hover:text-red-600 hover:bg-red-50"
+                     onClick={resetFilters}
+                   >
+                     <X className="w-5 h-5" /> Réinitialiser
+                   </Button>
+                 </motion.div>
+               )}
+             </AnimatePresence>
              <Button 
                variant="outline" 
-               className="gap-2 rounded-xl h-12 border-gray-200 text-gray-600 hover:text-primary hover:border-primary/20 hover:bg-blue-50"
-               onClick={() => setShowFilters(!showFilters)}
+               size="icon"
+               className="rounded-xl h-12 w-12 border-gray-200 text-gray-400 hover:text-primary hover:border-primary/20 hover:bg-blue-50"
+               onClick={fetchTripsData}
+               disabled={loading}
+               title="Actualiser les trajets"
              >
-               <Filter className="w-5 h-5" /> Filtres
+               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
              </Button>
              <Button 
-               className="gap-2 rounded-xl h-12 shadow-lg shadow-primary/20"
+               variant="outline" 
+               className="flex-1 lg:flex-none gap-2 rounded-xl h-11 md:h-12 border-gray-200 text-gray-600 hover:text-primary hover:border-primary/20 hover:bg-blue-50 text-sm"
+               onClick={() => setShowFilters(!showFilters)}
+             >
+               <Filter className="w-4 h-4 md:w-5 md:h-5" /> Filtres
+             </Button>
+             <Button 
+               className="flex-1 lg:flex-none gap-2 rounded-xl h-11 md:h-12 shadow-lg shadow-primary/20 text-sm"
                onClick={() => setShowMap(!showMap)}
              >
-               <MapIcon className="w-5 h-5" /> {showMap ? "Liste" : "Carte"}
+               <MapIcon className="w-4 h-4 md:w-5 md:h-5" /> {showMap ? "Liste" : "Carte"}
              </Button>
           </div>
         </div>
+
+        {/* Booking Feedback */}
+        <AnimatePresence>
+          {bookingMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`mb-6 p-4 rounded-2xl flex items-center gap-3 border ${
+                bookingMessage.type === 'success' 
+                  ? 'bg-green-50 text-green-700 border-green-100' 
+                  : 'bg-red-50 text-red-700 border-red-100'
+              }`}
+            >
+              {bookingMessage.type === 'success' ? <Ticket className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+              <p className="font-medium">{bookingMessage.text}</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-auto" 
+                onClick={() => setBookingMessage(null)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Filter Panel */}
         <AnimatePresence>
@@ -236,7 +396,7 @@ export function TripsPages() {
                   </Button>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
@@ -245,8 +405,8 @@ export function TripsPages() {
                     <Input
                       placeholder="Ex: Dakar"
                       value={filters.depart}
-                      onChange={(e) => setFilters({...filters, depart: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all"
+                      onChange={(e) => setFilters({...filters, depart: e.target.value.toUpperCase()})}
+                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all text-brand-dark placeholder:text-gray-400"
                     />
                   </div>
 
@@ -258,8 +418,8 @@ export function TripsPages() {
                     <Input
                       placeholder="Ex: Saint-Louis"
                       value={filters.arrivee}
-                      onChange={(e) => setFilters({...filters, arrivee: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all"
+                      onChange={(e) => setFilters({...filters, arrivee: e.target.value.toUpperCase()})}
+                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all text-brand-dark placeholder:text-gray-400"
                     />
                   </div>
 
@@ -272,35 +432,7 @@ export function TripsPages() {
                       type="date"
                       value={filters.date}
                       onChange={(e) => setFilters({...filters, date: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
-                      Prix max (CFA)
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="Ex: 5000"
-                      value={filters.maxPrice}
-                      onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Places min
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="Ex: 2"
-                      value={filters.minSeats}
-                      onChange={(e) => setFilters({...filters, minSeats: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all"
+                      className="rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-primary/20 transition-all text-brand-dark placeholder:text-gray-400"
                     />
                   </div>
                 </div>
@@ -352,7 +484,7 @@ export function TripsPages() {
             </Button>
           </div>
         ) : showMap ? (
-          <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100" style={{ height: '600px' }}>
+          <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 h-[500px] md:h-[600px]">
             <MapContainer
               center={[14.6928, -17.4467]}
               zoom={8}
@@ -364,20 +496,104 @@ export function TripsPages() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {filteredTrips.map((trip) => {
-                const departCoords = cityCoordinates[trip.depart];
-                if (!departCoords) return null;
+                const departCoords = getCoords(trip.depart);
+                const arriveeCoords = getCoords(trip.arrivee);
                 
                 return (
-                  <Marker key={trip.id} position={departCoords}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-bold text-brand-dark">{trip.depart} → {trip.arrivee}</h3>
-                        <p className="text-sm text-gray-600">{new Date(trip.dateDepart).toLocaleString('fr-FR')}</p>
-                        <p className="text-primary font-bold mt-1">{trip.prix} CFA</p>
-                        <p className="text-xs text-gray-500">{trip.placesDisponibles} place{trip.placesDisponibles > 1 ? 's' : ''}</p>
-                      </div>
-                    </Popup>
-                  </Marker>
+                  <React.Fragment key={trip.id}>
+                    {departCoords && (
+                      <Marker position={departCoords} icon={createCustomIcon('depart')}>
+                        <Popup className="premium-popup">
+                          <div className="p-1 space-y-3 min-w-[200px]">
+                            <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                              <div>
+                                <h3 className="font-bold text-brand-dark flex items-center gap-1">
+                                  {trip.depart} <span className="text-gray-400">→</span> {trip.arrivee}
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(trip.dateDepart).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} • {new Date(trip.dateDepart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-primary font-bold text-sm">{trip.prix} CFA</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                                <Users className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-gray-400 uppercase font-bold">Conducteur</p>
+                                <p className="text-xs font-bold text-brand-dark">
+                                  {trip.driverFirstName} {trip.driverLastName}
+                                </p>
+                              </div>
+                            </div>
+                            {/* places */}
+                            
+                            {trip.placesDisponibles > 0 && (
+                              <div className="flex items-center justify-between bg-gray-50 p-2 rounded-xl">
+                                <span className="text-[10px] font-semibold text-gray-500 pl-1 uppercase">Places</span>
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedSeats(prev => ({ ...prev, [trip.id]: Math.max(1, (prev[trip.id] || 1) - 1) }));
+                                    }}
+                                    className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:text-primary transition-all text-xs"
+                                  >-</button>
+                                  <span className="font-bold text-brand-dark w-3 text-center text-xs">{selectedSeats[trip.id] || 1}</span>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedSeats(prev => ({ ...prev, [trip.id]: Math.min(trip.placesDisponibles, (prev[trip.id] || 1) + 1) }));
+                                    }}
+                                    className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:text-primary transition-all text-xs"
+                                  >+</button>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleShare(trip)}
+                                className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-400 flex items-center justify-center hover:text-primary hover:border-primary/20 transition shrink-0"
+                                title="Partager ce trajet"
+                              >
+                                <Share2 className="w-4 h-4" />
+                              </button>
+                              
+                              <Button 
+                                size="sm" 
+                                className="flex-1 h-8 rounded-lg text-xs"
+                                onClick={() => handleReserve(trip.id)}
+                              >
+                                Réserver {selectedSeats[trip.id] > 1 ? `${selectedSeats[trip.id]} places` : ''}
+                              </Button>
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
+                    
+                    {departCoords && arriveeCoords && (
+                      <Polyline 
+                        positions={[departCoords, arriveeCoords]} 
+                        pathOptions={{ 
+                          color: '#1ba3ef', 
+                          weight: 3, 
+                          opacity: 0.6,
+                          dashArray: '5, 10',
+                          lineCap: 'round'
+                        }} 
+                      />
+                    )}
+
+                    {arriveeCoords && (
+                       <Marker position={arriveeCoords} icon={createCustomIcon('arrivee')} />
+                    )}
+                  </React.Fragment>
                 );
               })}
             </MapContainer>
@@ -394,12 +610,12 @@ export function TripsPages() {
 >
   {filteredTrips.map((trip) => (
     <motion.div key={trip.id} variants={item}>
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 group cursor-pointer relative overflow-hidden">
+      <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 group cursor-pointer relative overflow-hidden">
         
         <div className="absolute top-0 left-0 w-1 h-full bg-primary transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-bottom" />
 
         {/* HEADER */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-4">
           <div className="space-y-1">
             <div className="font-bold text-lg text-brand-dark flex items-center gap-2">
               {new Date(trip.dateDepart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -428,58 +644,92 @@ export function TripsPages() {
         </div>
 
         {/* TRAJET */}
-        <div className="relative pl-4 border-l-2 border-dashed border-gray-200 ml-2 space-y-8 py-2">
+        <div className="relative pl-4 border-l-2 border-dashed border-gray-200 ml-2 space-y-5 py-1">
           <div className="relative">
             <div className="absolute -left-[21px] top-1 w-3 h-3 bg-white border-2 border-brand-dark rounded-full group-hover:border-primary transition-colors" />
             <h3 className="font-bold text-brand-dark text-lg">{trip.depart}</h3>
           </div>
 
           <div className="relative">
-            <div className="absolute -left-[21px] top-1 w-3 h-3 bg-brand-dark border-2 border-brand-dark rounded-full group-hover:bg-primary group-hover:border-primary transition-colors" />
+            <div className="absolute -left-[21px]   w-3 h-3 bg-brand-dark border-2 border-brand-dark rounded-full group-hover:bg-primary group-hover:border-primary transition-colors" />
             <h3 className="font-bold text-brand-dark text-lg">{trip.arrivee}</h3>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
+        <div className="mt-4 pt-4 border-t border-gray-50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           
-          {/* CONDUCTEUR */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-brand-dark">
-                Conducteur #{trip.conducteurId}
-              </p>
-              <div className="flex items-center text-xs text-yellow-500 gap-1">
-                <span>★ 5.0</span>
-                <span className="text-gray-300">•</span>
-                <span className="text-gray-400">Verified</span>
+          {/* LEFT: CONDUCTEUR + SEATS */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 md:w-10 md:h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 shrink-0">
+                <Users className="w-5 h-5 md:w-6 md:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-brand-dark capitalize leading-tight truncate">
+                  {trip.driverFirstName && trip.driverLastName 
+                    ? `${trip.driverFirstName} ${trip.driverLastName}` 
+                    : `Conducteur #${trip.driverId}`}
+                </p>
+                <div className="flex items-center text-[10px] text-yellow-500 gap-1 mt-0.5">
+                  <span>★ 5.0</span>
+                  <span className="text-gray-300">•</span>
+                  <span className="text-gray-400 font-medium">Vérifié</span>
+                </div>
               </div>
             </div>
+
+            {trip.placesDisponibles > 0 && (
+              <div className="flex items-center gap-2 bg-gray-50/50 p-1 rounded-xl w-fit">
+                <span className="text-[10px] font-bold text-gray-400 px-1.5 uppercase tracking-wider">Places</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedSeats(prev => ({ ...prev, [trip.id]: Math.max(1, (prev[trip.id] || 1) - 1) }))}
+                    className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:text-primary transition-all text-xs"
+                  >-</button>
+                  <span className="font-bold text-brand-dark w-4 text-center text-xs">{selectedSeats[trip.id] || 1}</span>
+                  <button 
+                    onClick={() => setSelectedSeats(prev => ({ ...prev, [trip.id]: Math.min(trip.placesDisponibles, (prev[trip.id] || 1) + 1) }))}
+                    className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:text-primary transition-all text-xs"
+                  >+</button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* ACTIONS */}
-          <div className="flex items-center gap-2">
+          {/* RIGHT: ACTIONS */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              disabled={trip.placesDisponibles === 0}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition
+              onClick={() => handleShare(trip)}
+              className="h-10 w-10 md:h-11 md:w-11 rounded-xl bg-white border border-gray-200 text-gray-400 flex items-center justify-center hover:text-primary hover:border-primary/20 hover:bg-blue-50 transition shrink-0"
+              title="Partager ce trajet"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => handleReserve(trip.id)}
+              disabled={trip.placesDisponibles === 0 || bookingLoading === trip.id}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 h-10 md:h-11 rounded-xl text-sm font-bold transition
                 ${trip.placesDisponibles > 0
                   ? 'bg-primary text-white hover:bg-primary/90'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
             >
-              <Ticket className="w-4 h-4" />
-              Réserver
+              {bookingLoading === trip.id ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Ticket className="w-4 h-4" />
+              )}
+              {bookingLoading === trip.id ? '...' : 'Réserver'}
             </button>
 
             <a
-              href={`https://wa.me/2217XXXXXXX`}
+              href={`https://wa.me/2217${trip.driverPhone}?text=${encodeURIComponent(`Bonjour, ${trip.driverFirstName} ${trip.driverLastName} je voudrais avoir des informations supplémentaires à propos de votre trajet : ${trip.depart} - ${trip.arrivee}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition"
+              className="h-10 w-10 md:h-11 md:w-11 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition shrink-0"
             >
-              <Phone className="w-5 h-5" />
+              <img src={Whatsapp} alt="Whatsapp"  />
             </a>
           </div>
         </div>
