@@ -17,6 +17,8 @@ public interface TripService {
 
     TripResponse decrementSeats(Long id, int quantity);
 
+    TripResponse incrementSeats(Long id, int quantity);
+
     List<TripResponse> getTripsByDriverId(String driverId);
 
     TripResponse updateTrip(Long id, com.ndaje.trip.dto.request.UpdateTripRequest request);

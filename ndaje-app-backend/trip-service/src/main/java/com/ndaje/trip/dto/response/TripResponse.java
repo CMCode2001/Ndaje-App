@@ -15,7 +15,13 @@ import java.time.LocalDateTime;
 public class TripResponse {
     private Long id;
     private String driverId;
+    private String driverFirstName;
+    private String driverLastName;
+    private String driverPhone;
     private String vehicleId;
+    private String vehicleMarque;
+    private String vehicleModele;
+    private String vehicleImmatriculation;
     private String depart;
     private String arrivee;
     private LocalDateTime dateDepart;

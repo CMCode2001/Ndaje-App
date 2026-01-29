@@ -1,13 +1,20 @@
 com\ndaje\trip\dto\response\VehiculeDto.class
 com\ndaje\trip\TripServiceApplication.class
+com\ndaje\trip\client\UserClient.class
 com\ndaje\trip\dto\response\ApiResponse.class
 com\ndaje\trip\dto\response\ApiResponse$ApiResponseBuilder.class
 com\ndaje\trip\repository\TripRepository.class
+com\ndaje\trip\entity\Position$PositionBuilder.class
 com\ndaje\trip\service\TripService.class
+com\ndaje\trip\security\JwtAuthConverter.class
 com\ndaje\trip\dto\request\CreateTripRequest.class
 com\ndaje\trip\controller\TripController.class
+com\ndaje\trip\client\CarClient.class
 com\ndaje\trip\exception\TripNotFoundException.class
 com\ndaje\trip\dto\response\TripResponse.class
+com\ndaje\trip\security\SecurityConfig.class
+com\ndaje\trip\dto\request\UpdateTripRequest.class
+com\ndaje\trip\dto\response\UserDto.class
 com\ndaje\trip\service\impl\TripServiceImpl.class
 com\ndaje\trip\exception\BusinessException.class
 com\ndaje\trip\entity\StatutTrajet.class
@@ -15,4 +22,5 @@ com\ndaje\trip\config\DataInitializer.class
 com\ndaje\trip\entity\Trajet$TrajetBuilder.class
 com\ndaje\trip\entity\Trajet.class
 com\ndaje\trip\dto\response\TripResponse$TripResponseBuilder.class
+com\ndaje\trip\entity\Position.class
 com\ndaje\trip\exception\GlobalExceptionHandler.class

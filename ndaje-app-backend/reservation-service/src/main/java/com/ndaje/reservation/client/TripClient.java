@@ -23,4 +23,11 @@ public interface TripClient {
     @PostMapping("/api/trips/{id}/decrement-seats")
     ResponseEntity<ApiResponse<TripResponse>> decrementSeats(@PathVariable("id") Long id,
             @RequestParam("quantity") int quantity);
+
+    @PostMapping("/api/trips/{id}/increment-seats")
+    ResponseEntity<ApiResponse<TripResponse>> incrementSeats(@PathVariable("id") Long id,
+            @RequestParam("quantity") int quantity);
+
+    @GetMapping("/api/trips/driver/{driverId}")
+    ResponseEntity<ApiResponse<java.util.List<TripResponse>>> getTripsByDriverId(@PathVariable("driverId") String driverId);
 }

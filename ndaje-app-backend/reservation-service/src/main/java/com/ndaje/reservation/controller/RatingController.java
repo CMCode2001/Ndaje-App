@@ -1,7 +1,7 @@
 package com.ndaje.reservation.controller;
 
 import com.ndaje.reservation.dto.request.CreateRatingRequest;
-import com.ndaje.reservation.dto.response.ApiResponse;
+import com.ndaje.reservation.dto.ApiResponse;
 import com.ndaje.reservation.entity.Notation;
 import com.ndaje.reservation.service.RatingService;
 import jakarta.validation.Valid;

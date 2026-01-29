@@ -231,7 +231,29 @@ La réponse inclut les détails du trajet réservé.
 ]
 ```
 
-### 4. Gestion des Erreurs
+### 5. Vue Conducteur - Réservations (`/api/reservations/driver/{id}`)
+Permet au conducteur de voir qui a réservé sur ses trajets.
+
+**Structure de l'objet `data` (Liste) :**
+```json
+[
+  {
+    "id": 20,
+    "passengerId": "uuid-passager",
+    "passengerFirstName": "Alice",
+    "passengerLastName": "Diop",
+    "passengerPhone": "+22170...",
+    "tripId": 1,
+    "depart": "Dakar",
+    "arrivee": "Saint-Louis",
+    "dateDepart": "2026-01-25T10:00:00",
+    "places": 1,
+    "status": "CONFIRMED"
+  }
+]
+```
+
+### 6. Gestion des Erreurs
 Le backend renvoie des messages d'erreur explicites en cas d'échec (ex: dépassement de capacité).
 ```json
 {

@@ -2,6 +2,8 @@ package com.ndaje.trip.service.impl;
 
 import com.ndaje.trip.dto.request.CreateTripRequest;
 import com.ndaje.trip.dto.response.TripResponse;
+import com.ndaje.trip.dto.response.UserDto;
+import com.ndaje.trip.dto.response.VehiculeDto;
 import com.ndaje.trip.entity.StatutTrajet;
 import com.ndaje.trip.entity.Trajet;
 import com.ndaje.trip.exception.TripNotFoundException;
@@ -32,7 +34,7 @@ public class TripServiceImpl implements TripService {
             org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
                     .getContext().getAuthentication();
             if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwtToken) {
-                driverId = jwtToken.getName(); // Usually the 'sub' claim (Keycloak userId)
+                driverId = jwtToken.getName();
             }
         }
 
@@ -44,7 +46,7 @@ public class TripServiceImpl implements TripService {
         // 2. Resolve Vehicle ID if not provided
         String vehicleId = request.getVehicleId();
         if (vehicleId == null || vehicleId.isBlank()) {
-            List<com.ndaje.trip.dto.response.VehiculeDto> vehicles = carClient.getVehiculesByDriverId(driverId);
+            List<VehiculeDto> vehicles = carClient.getVehiculesByDriverId(driverId);
             if (vehicles.isEmpty()) {
                 throw new com.ndaje.trip.exception.BusinessException(
                         "No vehicle found for this driver. Please register a vehicle first.");
@@ -56,18 +58,27 @@ public class TripServiceImpl implements TripService {
             }
         }
 
-        // Validate Driver (Optional if we trust Keycloak, but good for sync)
+        // Validate Driver
+        UserDto driver = null;
         try {
-            userClient.getUserById(driverId);
+            driver = userClient.getUserById(driverId);
         } catch (Exception e) {
             throw new com.ndaje.trip.exception.BusinessException("Invalid Driver ID or User Service unavailable");
         }
 
         // Validate Vehicle
+        VehiculeDto vehicle;
         try {
-            carClient.getVehiculeById(Long.parseLong(vehicleId));
+            vehicle = carClient.getVehiculeById(Long.parseLong(vehicleId));
         } catch (Exception e) {
             throw new com.ndaje.trip.exception.BusinessException("Invalid Vehicle ID or Vehicle Service unavailable");
+        }
+
+        // Validate available seats against vehicle capacity
+        if (request.getPlacesDisponibles() > vehicle.getPlaces()) {
+            throw new com.ndaje.trip.exception.BusinessException(
+                    "Available seats (" + request.getPlacesDisponibles() + ") cannot exceed vehicle capacity ("
+                            + vehicle.getPlaces() + ")");
         }
 
         Trajet trajet = Trajet.builder()
@@ -82,7 +93,7 @@ public class TripServiceImpl implements TripService {
                 .build();
 
         Trajet savedTrajet = tripRepository.save(trajet);
-        return mapToTripResponse(savedTrajet);
+        return mapToTripResponse(savedTrajet, driver, vehicle);
     }
 
     @Override
@@ -96,8 +107,28 @@ public class TripServiceImpl implements TripService {
     @Override
     @Transactional(readOnly = true)
     public List<TripResponse> getAllTrips() {
-        return tripRepository.findAll().stream()
-                .map(this::mapToTripResponse)
+        List<Trajet> trajets = tripRepository.findAll();
+        java.util.Map<String, UserDto> driverCache = new java.util.HashMap<>();
+        java.util.Map<Long, VehiculeDto> vehicleCache = new java.util.HashMap<>();
+
+        return trajets.stream()
+                .map(trajet -> {
+                    UserDto driver = driverCache.computeIfAbsent(trajet.getDriverId(), id -> {
+                        try {
+                            return userClient.getUserById(id);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    });
+                    VehiculeDto vehicle = vehicleCache.computeIfAbsent(Long.parseLong(trajet.getVehicleId()), id -> {
+                        try {
+                            return carClient.getVehiculeById(id);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    });
+                    return mapToTripResponse(trajet, driver, vehicle);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -126,10 +157,39 @@ public class TripServiceImpl implements TripService {
     }
 
     @Override
+    public TripResponse incrementSeats(Long id, int quantity) {
+        Trajet trajet = tripRepository.findById(id)
+                .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + id));
+
+        trajet.setPlacesDisponibles(trajet.getPlacesDisponibles() + quantity);
+        Trajet updatedTrajet = tripRepository.save(trajet);
+        return mapToTripResponse(updatedTrajet);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<TripResponse> getTripsByDriverId(String driverId) {
-        return tripRepository.findByDriverId(driverId).stream()
-                .map(this::mapToTripResponse)
+        UserDto driver = null;
+        try {
+            driver = userClient.getUserById(driverId);
+        } catch (Exception e) {
+        }
+
+        final UserDto finalDriver = driver;
+        List<Trajet> trajets = tripRepository.findByDriverId(driverId);
+        java.util.Map<Long, VehiculeDto> vehicleCache = new java.util.HashMap<>();
+
+        return trajets.stream()
+                .map(trajet -> {
+                    VehiculeDto vehicle = vehicleCache.computeIfAbsent(Long.parseLong(trajet.getVehicleId()), id -> {
+                        try {
+                            return carClient.getVehiculeById(id);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    });
+                    return mapToTripResponse(trajet, finalDriver, vehicle);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -138,21 +198,27 @@ public class TripServiceImpl implements TripService {
         Trajet trajet = tripRepository.findById(id)
                 .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + id));
 
-        // Update fields if present (assuming non-null means update, or we can just
-        // overwrite)
-        // Since UpdateTripRequest has validation constraints, we can assume valid if
-        // passed @Valid in controller
-        // But for update usually we allow partial. The DTO I made has constraints.
-        // If the controller uses @Valid, then all fields must be valid.
-
         if (request.getDepart() != null)
             trajet.setDepart(request.getDepart());
         if (request.getArrivee() != null)
             trajet.setArrivee(request.getArrivee());
         if (request.getDateDepart() != null)
             trajet.setDateDepart(request.getDateDepart());
-        if (request.getPlacesDisponibles() != null)
+        if (request.getPlacesDisponibles() != null) {
+            VehiculeDto vehicle;
+            try {
+                vehicle = carClient.getVehiculeById(Long.parseLong(trajet.getVehicleId()));
+                if (request.getPlacesDisponibles() > vehicle.getPlaces()) {
+                    throw new com.ndaje.trip.exception.BusinessException(
+                            "Available seats (" + request.getPlacesDisponibles() + ") cannot exceed vehicle capacity ("
+                                    + vehicle.getPlaces() + ")");
+                }
+            } catch (com.ndaje.trip.exception.BusinessException be) {
+                throw be;
+            } catch (Exception e) {
+            }
             trajet.setPlacesDisponibles(request.getPlacesDisponibles());
+        }
         if (request.getPrix() != null)
             trajet.setPrix(request.getPrix());
 
@@ -161,10 +227,32 @@ public class TripServiceImpl implements TripService {
     }
 
     private TripResponse mapToTripResponse(Trajet trajet) {
+        UserDto driver = null;
+        try {
+            driver = userClient.getUserById(trajet.getDriverId());
+        } catch (Exception e) {
+        }
+        
+        VehiculeDto vehicle = null;
+        try {
+            vehicle = carClient.getVehiculeById(Long.parseLong(trajet.getVehicleId()));
+        } catch (Exception e) {
+        }
+        
+        return mapToTripResponse(trajet, driver, vehicle);
+    }
+
+    private TripResponse mapToTripResponse(Trajet trajet, UserDto driver, VehiculeDto vehicle) {
         return TripResponse.builder()
                 .id(trajet.getId())
                 .driverId(trajet.getDriverId())
+                .driverFirstName(driver != null ? driver.getPrenom() : null)
+                .driverLastName(driver != null ? driver.getNom() : null)
+                .driverPhone(driver != null ? driver.getTelephone() : null)
                 .vehicleId(trajet.getVehicleId())
+                .vehicleMarque(vehicle != null ? vehicle.getMarque() : null)
+                .vehicleModele(vehicle != null ? vehicle.getModele() : null)
+                .vehicleImmatriculation(vehicle != null ? vehicle.getImmatriculation() : null)
                 .depart(trajet.getDepart())
                 .arrivee(trajet.getArrivee())
                 .dateDepart(trajet.getDateDepart())

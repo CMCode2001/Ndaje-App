@@ -9,4 +9,5 @@ public class VehiculeDto {
     private String marque;
     private String modele;
     private String immatriculation;
+    private int places;
 }

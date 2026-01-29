@@ -105,4 +105,17 @@ public class TripController {
                                                 .data(tripResponse)
                                                 .build());
         }
+
+        @PostMapping("/{id}/increment-seats")
+        public ResponseEntity<ApiResponse<TripResponse>> incrementSeats(
+                        @PathVariable Long id,
+                        @RequestParam int quantity) {
+                TripResponse tripResponse = tripService.incrementSeats(id, quantity);
+                return ResponseEntity.ok()
+                                .body(ApiResponse.<TripResponse>builder()
+                                                .success(true)
+                                                .message("Seats incremented successfully")
+                                                .data(tripResponse)
+                                                .build());
+        }
 }

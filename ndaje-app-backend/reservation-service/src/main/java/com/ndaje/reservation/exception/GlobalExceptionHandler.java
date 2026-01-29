@@ -1,6 +1,6 @@
 package com.ndaje.reservation.exception;
 
-import com.ndaje.reservation.dto.response.ApiResponse;
+import com.ndaje.reservation.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

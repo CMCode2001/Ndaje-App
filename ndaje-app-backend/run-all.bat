@@ -61,6 +61,10 @@ start "Document Service" cmd /k "mvn spring-boot:run -f document-service/pom.xml
 echo 6. Lancement de Reservation Service (Port 8088)...
 start "Reservation Service" cmd /k "mvn spring-boot:run -f reservation-service/pom.xml"
 
+echo 7. Lancement de Car Service (Port 8089)...
+start "Car Service" cmd /k "mvn spring-boot:run -f car-service/pom.xml"
+
+
 echo.
 echo ========================================================
 echo   Tous les services sont en cours de demarrage
@@ -82,6 +86,7 @@ taskkill /FI "WINDOWTITLE eq User Service*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Trip Service*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Document Service*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Reservation Service*" /T /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq Car Service*" /T /F >nul 2>&1
 
 echo Tous les services ont ete arretes.
 pause

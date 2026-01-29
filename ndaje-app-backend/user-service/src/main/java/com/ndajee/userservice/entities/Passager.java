@@ -12,5 +12,5 @@ import java.util.List;
 @Setter
 public class Passager extends Utilisateur {
     private int pointsFidelite;
-    private double noteMoyenne;
+    private Double noteMoyenne;
 }

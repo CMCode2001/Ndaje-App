@@ -16,5 +16,5 @@ public class Conducteur extends Utilisateur {
     private StatutConducteur statut;
 
     private String permis;
-    private double noteMoyenne;
+    private Double noteMoyenne;
 }

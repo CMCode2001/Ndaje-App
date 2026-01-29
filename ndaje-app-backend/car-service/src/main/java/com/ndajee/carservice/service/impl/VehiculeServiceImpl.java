@@ -45,6 +45,7 @@ public class VehiculeServiceImpl implements VehiculeService {
                     existingVehicule.setModele(vehicule.getModele());
                     existingVehicule.setImmatriculation(vehicule.getImmatriculation());
                     existingVehicule.setCouleur(vehicule.getCouleur());
+                    existingVehicule.setStatutVerification(vehicule.getStatutVerification());
                     return vehiculeRepository.save(existingVehicule);
                 })
                 .orElseThrow(() -> new RuntimeException("Vehicule not found with id: " + id));

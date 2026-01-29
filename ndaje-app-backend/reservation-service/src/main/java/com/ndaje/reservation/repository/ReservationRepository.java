@@ -8,4 +8,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByPassengerId(String passengerId);
 
     List<Reservation> findByTripId(Long tripId);
+
+    List<Reservation> findByTripIdIn(List<Long> tripIds);
 }
