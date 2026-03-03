@@ -9,10 +9,9 @@ Ndaje App est une plateforme de covoiturage moderne utilisant une architecture m
 | **Keycloak (Auth/Admin)** | 8081 | Serveur d'identité et gestion des rôles |
 | **API Gateway** | 9000 | Point d'entrée unique (Routage centralisé) |
 | **Eureka Server** | 8761 | Service Discovery |
-| **User Service** | 8082 | Gestion des profils, inscriptions et admin |
-| **Document Service** | 8086 | Gestion des documents (Kyc, Permis) via R2 |
-| **Trip Service** | 8084 | Gestion des trajets et réservations |
-| **Car Service** | 8089 | Gestion des véhicules et documents justificatifs |
+| **User Service** | 8082 | Gestion des profils, inscriptions et documents utilisateurs (MinIO) |
+| **Trip Service** | 8084 | Gestion des déplacements (Trajet/Caravane) et réservations |
+| **Car Service** | 8089 | Gestion des véhicules et documents justificatifs (MinIO) |
 
 ## Installation & Démarrage
 
@@ -22,8 +21,9 @@ Ndaje App est une plateforme de covoiturage moderne utilisant une architecture m
 - Keycloak installé et configuré (ndajee-realm)
 
 ### 2. Configuration
-Créez les variables d'environnement suivantes ou modifiez les fichiers `application.yml` :
-- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID` (Pour le stockage)
+Créer un fichier `.env` à la racine :
+- `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_ENDPOINT`, `MINIO_BUCKET` (Pour MinIO ou R2)
+- Configuration DB (PostgreSQL) et JWT Keycloak.
 
 ### 3. Lancer tout le système
 Utilisez le script batch fourni à la racine :
@@ -42,14 +42,15 @@ Utilisez le script batch fourni à la racine :
 - `GET /api/admin/users` : (Admin) Liste tous les utilisateurs
 - `DELETE /api/admin/users/{id}` : (Admin) Suppression
 
-### Document Service
-- `POST /api/documents` : Upload de fichier (Multipart)
-- `GET /api/documents/{id}` : Téléchargement du fichier
-- `GET /api/documents/{id}/metadata` : Détails du document
-- `GET /api/documents?utilisateurId=...` : Liste par utilisateur
+### User Document Service
+- `POST /api/users/{userId}/documents` : Upload de fichier (Multipart)
+- `GET /api/users/{userId}/documents/{documentId}` : Téléchargement du fichier
+- `GET /api/users/{userId}/documents` : Liste par utilisateur
 
 ### Trip Service
 - `GET /api/trips/hello` : Test de connectivité
+- *Caravanes* : `POST /api/caravanes/`
+- *Réservations* : `POST /api/reservations/`
 
 ### Car Service
 - `POST /api/vehicules` : Créer un véhicule (Statut initial: `EN_ATTENTE`)
@@ -80,19 +81,18 @@ Dans Postman :
 2. Type : **Bearer Token**.
 3. Collez votre token.
 
-### 3. Tester l'Upload (Document Service)
-- **URL** : `POST http://localhost:9000/api/documents`
+### 3. Tester l'Upload (Via User ou Car Service)
+- **URL** : `POST http://localhost:9000/api/users/{userId}/documents` (ou `/api/vehicules/{vehiculeId}/documents`)
 - **Body** : `form-data`
   - `file` : (Type File) choisissez un fichier
-  - `utilisateurId` : l'ID Keycloak de l'utilisateur
 
 ---
 
 ## Technologies
 - **Framework** : Spring Boot 3.2, Spring Cloud (Gateway, Eureka)
 - **Sécurité** : Keycloak, OAuth2 Resource Server, JWT
-- **Stockage** : Cloudflare R2 (API compatible S3)
-- **BDD** : H2 (Dev) / PostgreSQL (Prod)
+- **Stockage** : MinIO (S3 Compatible)
+- **BDD** : PostgreSQL (Local/Prod)
 - **Communication** : REST, Maven
 
 ## User Stories
@@ -114,6 +114,10 @@ Dans Postman :
 - **Consulter l'historique de ses réservations** : En tant que passager, je veux voir mes réservations passées et futures.
   - `GET /api/reservations/passenger/{passengerId}`
 
+### Caravannier (CARAVANNIER)
+- **Créer une caravane** : Organiser un voyage de groupe (pèlerinage, sortie).
+  - `POST /api/caravanes`
+
 ## Microservices Endpoints
 
 ### User Service (Port 8082)
@@ -123,18 +127,13 @@ Dans Postman :
 
 ### Trip Service (Port 8084)
 - `POST /api/trips` (Create Trip)
-- `GET /api/trips` (List All)
-- `GET /api/trips/{id}` (Get One)
-- `GET /api/trips/driver/{driverId}` (List by Driver)
-- `PUT /api/trips/{id}` (Update Trip)
-
-### Reservation Service (Port 8088)
+- `POST /api/caravanes` (Create Caravane)
 - `POST /api/reservations` (Create Reservation)
-- `GET /api/reservations/passenger/{passengerId}` (List by Passenger)
+- `GET /api/trips/driver/{driverId}`
+- `GET /api/reservations/passenger/{passengerId}`
+- `GET /api/notations/trajet/{trajetId}`
 
 ### Car Service (Port 8089)
 - `POST /api/vehicules` (Create Vehicle)
-- `GET /api/vehicules` (List All)
-- `GET /api/vehicules/driver/{driverId}` (List by Driver)
+- `GET /api/vehicules/driver/{driverId}`
 - `POST /api/vehicules/{id}/documents` (Upload Doc)
-- `GET /api/vehicules/{id}/documents` (List Docs)

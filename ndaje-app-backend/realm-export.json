@@ -112,6 +112,15 @@
         "clientRole": false,
         "containerId": "9b178a67-08a0-496d-8874-42dae3740aee",
         "attributes": {}
+      },
+      {
+        "id": "f5a7b3c2-d345-4421-aab1-eabf73289c15",
+        "name": "CARAVANNIER",
+        "description": "Organisateur de caravanes et voyages de groupes",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "9b178a67-08a0-496d-8874-42dae3740aee",
+        "attributes": {}
       }
     ],
     "client": {

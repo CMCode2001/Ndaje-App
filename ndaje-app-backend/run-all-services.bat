@@ -35,21 +35,17 @@ echo 1. Eureka Server
 echo 2. API Gateway
 echo 3. User Service
 echo 4. Trip Service
-echo 5. Reservation Service
-echo 6. Document Service
-echo 7. Car Service
-echo 8. Retour au menu principal
+echo 5. Car Service
+echo 6. Retour au menu principal
 echo.
-set /p srv_choice="Selectionnez un service a demarrer (1-8) : "
+set /p srv_choice="Selectionnez un service a demarrer (1-6) : "
 
 if "%srv_choice%"=="1" goto start_eureka
 if "%srv_choice%"=="2" goto start_gateway
 if "%srv_choice%"=="3" goto start_user
 if "%srv_choice%"=="4" goto start_trip
-if "%srv_choice%"=="5" goto start_reservation
-if "%srv_choice%"=="6" goto start_document
-if "%srv_choice%"=="7" goto start_car
-if "%srv_choice%"=="8" goto main_menu
+if "%srv_choice%"=="5" goto start_car
+if "%srv_choice%"=="6" goto main_menu
 goto individual_menu
 
 :: ==========================================
@@ -77,12 +73,6 @@ timeout /t 5 /nobreak
 
 echo - Trip Service...
 start "Ndaje-Trip" cmd /k "mvn spring-boot:run -f trip-service/pom.xml"
-
-echo - Reservation Service...
-start "Ndaje-Reservation" cmd /k "mvn spring-boot:run -f reservation-service/pom.xml"
-
-echo - Document Service...
-start "Ndaje-Document" cmd /k "mvn spring-boot:run -f document-service/pom.xml"
 
 echo - Car Service...
 start "Ndaje-Car" cmd /k "mvn spring-boot:run -f car-service/pom.xml"
@@ -135,14 +125,6 @@ goto individual_menu
 
 :start_trip
 start "Ndaje-Trip" cmd /k "mvn spring-boot:run -f trip-service/pom.xml"
-goto individual_menu
-
-:start_reservation
-start "Ndaje-Reservation" cmd /k "mvn spring-boot:run -f reservation-service/pom.xml"
-goto individual_menu
-
-:start_document
-start "Ndaje-Document" cmd /k "mvn spring-boot:run -f document-service/pom.xml"
 goto individual_menu
 
 :start_car

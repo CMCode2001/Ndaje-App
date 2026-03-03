@@ -1,18 +1,20 @@
 package com.ndajee.carservice.service.impl;
 
-import com.ndajee.carservice.client.DocumentClient;
 import com.ndajee.carservice.domain.Vehicule;
 import com.ndajee.carservice.dto.DocumentResponse;
 import com.ndajee.carservice.dto.VehiculeRequest;
 import com.ndajee.carservice.dto.VehiculeResponse;
+import com.ndajee.carservice.exception.ResourceNotFoundException;
 import com.ndajee.carservice.mapper.VehiculeMapper;
 import com.ndajee.carservice.repository.VehiculeRepository;
+import com.ndajee.carservice.service.VehiculeDocumentService;
 import com.ndajee.carservice.service.VehiculeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
-import com.ndajee.carservice.exception.ResourceNotFoundException;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,17 +25,16 @@ import java.util.Optional;
 public class VehiculeServiceImpl implements VehiculeService {
 
     private final VehiculeRepository vehiculeRepository;
-    private final DocumentClient documentClient;
     private final VehiculeMapper vehiculeMapper;
+    private final VehiculeDocumentService vehiculeDocumentService; // ← local, plus de Feign
 
     @Override
     public VehiculeResponse createVehicule(VehiculeRequest vehiculeRequest) {
         Vehicule vehicule = vehiculeMapper.toEntity(vehiculeRequest);
 
         if (vehicule.getDriverId() == null || vehicule.getDriverId().isBlank()) {
-            org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwtToken) {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication instanceof JwtAuthenticationToken jwtToken) {
                 vehicule.setDriverId(jwtToken.getName());
             }
         }
@@ -42,9 +43,7 @@ public class VehiculeServiceImpl implements VehiculeService {
             throw new RuntimeException("Driver ID is required and could not be determined from security context");
         }
 
-        // Initialisation du statut de vérification
         vehicule.setStatutVerification(com.ndajee.carservice.domain.StatutVerificationVehicule.EN_ATTENTE);
-
         return vehiculeMapper.toResponse(vehiculeRepository.save(vehicule));
     }
 
@@ -53,8 +52,7 @@ public class VehiculeServiceImpl implements VehiculeService {
         return vehiculeRepository.findById(id)
                 .map(existingVehicule -> {
                     vehiculeMapper.updateEntityFromRequest(vehiculeRequest, existingVehicule);
-                    Vehicule saved = vehiculeRepository.save(existingVehicule);
-                    return vehiculeMapper.toResponse(saved);
+                    return vehiculeMapper.toResponse(vehiculeRepository.save(existingVehicule));
                 })
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + id));
     }
@@ -83,13 +81,14 @@ public class VehiculeServiceImpl implements VehiculeService {
     }
 
     @Override
-    public DocumentResponse uploadDocument(Long vehiculeId, MultipartFile file, String typeDocument, String numero,
-            String expiration) {
+    public DocumentResponse uploadDocument(Long vehiculeId, MultipartFile file,
+            String typeDocument, String numero, String expiration) {
+        // Vérifie que le véhicule existe
         vehiculeRepository.findById(vehiculeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId));
 
-        return documentClient.uploadDocument(file, String.valueOf(vehiculeId), "VEHICLE", typeDocument, numero,
-                expiration);
+        // Délègue au service local — plus de Feign vers document-service
+        return vehiculeDocumentService.uploadDocument(vehiculeId, file, typeDocument, numero, expiration);
     }
 
     @Override
@@ -97,6 +96,6 @@ public class VehiculeServiceImpl implements VehiculeService {
         if (!vehiculeRepository.existsById(vehiculeId)) {
             throw new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId);
         }
-        return documentClient.getDocumentsByEntity(String.valueOf(vehiculeId), "VEHICLE");
+        return vehiculeDocumentService.getDocumentsByVehicule(vehiculeId);
     }
 }

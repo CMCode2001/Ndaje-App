@@ -28,8 +28,20 @@ spring:
           issuer-uri: http://localhost:8081/realms/ndajee-realm
           jwk-set-uri: http://localhost:8081/realms/ndajee-realm/protocol/openid-connect/certs
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 server:
   port: 8089
+
+# MinIO Configuration (S3-compatible)
+minio:
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  endpoint: ${MINIO_ENDPOINT}
+  bucket: ${MINIO_BUCKET}
 
 eureka:
   client:
@@ -37,3 +49,8 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+logging:
+  level:
+    com.ndajee.carservice: DEBUG
+    software.amazon.awssdk: INFO

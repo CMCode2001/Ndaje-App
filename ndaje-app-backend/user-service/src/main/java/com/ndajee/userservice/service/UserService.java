@@ -31,51 +31,52 @@ public class UserService {
     private final ConducteurRepository conducteurRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AdminRepository adminRepository;
+    private final com.ndajee.userservice.repositories.CaravannierRepository caravannierRepository;
     private final KeycloakService keycloakService;
 
-
     /**
-     * Inscrit un nouveau passager. Utilise une transaction pour assurer que 
-     * l'utilisateur est supprimé de Keycloak si l'enregistrement local échoue (rollback).
+     * Inscrit un nouveau passager. Utilise une transaction pour assurer que
+     * l'utilisateur est supprimé de Keycloak si l'enregistrement local échoue
+     * (rollback).
      */
     @Transactional
     public UserResponse registerPassager(UserRegistrationRequest request) {
 
-    if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
-        throw new BusinessException("Email déjà utilisé.");
-    }
-
-    String keycloakId = null;
-
-    try {
-        keycloakId = keycloakService.createUser(request, "PASSAGER");
-
-        Passager passager = new Passager();
-        mapCommonFields(passager, request);
-
-        passager.setId(keycloakId);
-
-        passager.setRole("PASSAGER");
-        passager.setPointsFidelite(50);
-
-        Passager saved = passagerRepository.save(passager);
-
-        return mapToResponse(saved, "PASSAGER");
-
-    } catch (Exception ex) {
-
-        if (keycloakId != null) {
-            try {
-                keycloakService.deleteUser(keycloakId);
-            } catch (Exception kcEx) {
-                // log critique mais on ne masque pas l'erreur principale
-                log.error("Échec rollback Keycloak pour l'utilisateur {}", keycloakId, kcEx);
-            }
+        if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new BusinessException("Email déjà utilisé.");
         }
 
-        throw ex;
+        String keycloakId = null;
+
+        try {
+            keycloakId = keycloakService.createUser(request, "PASSAGER");
+
+            Passager passager = new Passager();
+            mapCommonFields(passager, request);
+
+            passager.setId(keycloakId);
+
+            passager.setRole("PASSAGER");
+            passager.setPointsFidelite(50);
+
+            Passager saved = passagerRepository.save(passager);
+
+            return mapToResponse(saved, "PASSAGER");
+
+        } catch (Exception ex) {
+
+            if (keycloakId != null) {
+                try {
+                    keycloakService.deleteUser(keycloakId);
+                } catch (Exception kcEx) {
+                    // log critique mais on ne masque pas l'erreur principale
+                    log.error("Échec rollback Keycloak pour l'utilisateur {}", keycloakId, kcEx);
+                }
+            }
+
+            throw ex;
+        }
     }
-}
 
     /**
      * Inscrit un nouveau conducteur avec rollback automatique en cas d'erreur.
@@ -96,7 +97,7 @@ public class UserService {
             conducteur.setId(keycloakId);
             conducteur.setRole("DRIVER");
             conducteur.setStatut(StatutConducteur.HORS_LIGNE); // Default status
-            
+
             Conducteur saved = conducteurRepository.save(conducteur);
             return mapToResponse(saved, "DRIVER");
         } catch (Exception ex) {
@@ -143,6 +144,40 @@ public class UserService {
             throw ex;
         }
     }
+
+    /**
+     * Inscrit un nouveau caravannier (Organisateur de Pèlerinages ou Voyages).
+     */
+    @Transactional
+    public UserResponse registerCaravannier(UserRegistrationRequest request) {
+        if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new BusinessException("Email déjà utilisé localement.");
+        }
+
+        String keycloakId = null;
+
+        try {
+            keycloakId = keycloakService.createUser(request, "CARAVANNIER");
+
+            com.ndajee.userservice.entities.Caravannier caravannier = new com.ndajee.userservice.entities.Caravannier();
+            mapCommonFields(caravannier, request);
+            caravannier.setId(keycloakId);
+            caravannier.setRole("CARAVANNIER");
+
+            com.ndajee.userservice.entities.Caravannier saved = caravannierRepository.save(caravannier);
+            return mapToResponse(saved, "CARAVANNIER");
+        } catch (Exception ex) {
+            if (keycloakId != null) {
+                try {
+                    keycloakService.deleteUser(keycloakId);
+                } catch (Exception kcEx) {
+                    log.error("Échec rollback Keycloak pour le caravannier {}", keycloakId, kcEx);
+                }
+            }
+            throw ex;
+        }
+    }
+
     /**
      * Récupère un utilisateur par son ID.
      */
@@ -151,16 +186,17 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé."));
         return mapToResponse(user, getRoleFromEntity(user));
     }
+
     public TokenResponse login(LoginRequest request) {
         // Vérifier si l'utilisateur existe et est actif dans la base de données locale
         Utilisateur user = utilisateurRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException("Email ou mot de passe incorrect."));
-        
+
         // Vérifier si le compte est actif
         if (!user.isActif()) {
             throw new BusinessException("Compte désactivé");
         }
-        
+
         // Procéder à l'authentification Keycloak
         return keycloakService.login(request);
     }
@@ -182,7 +218,8 @@ public class UserService {
     }
 
     /**
-     * Modifie les informations du profil. Synchronise les changements localement et sur Keycloak.
+     * Modifie les informations du profil. Synchronise les changements localement et
+     * sur Keycloak.
      */
     @Transactional
     public UserResponse updateProfile(String id, UpdateProfileRequest request) {
@@ -192,20 +229,26 @@ public class UserService {
         user.setPrenom(request.getPrenom());
         user.setNom(request.getNom());
         user.setTelephone(request.getTelephone());
-        
+
         Utilisateur saved = utilisateurRepository.save(user); // Sync local DB
-        
+
         // Sync Keycloak
         keycloakService.updateUser(id, request);
-        
+
         return mapToResponse(saved, getRoleFromEntity(saved));
     }
-    
+
     private String getRoleFromEntity(Utilisateur user) {
-        if (user.getRole() != null) return user.getRole();
-        if (user instanceof Passager) return "PASSAGER";
-        if (user instanceof Conducteur) return "DRIVER";
-        if (user instanceof Admin) return "ADMIN";
+        if (user.getRole() != null)
+            return user.getRole();
+        if (user instanceof Passager)
+            return "PASSAGER";
+        if (user instanceof Conducteur)
+            return "DRIVER";
+        if (user instanceof Admin)
+            return "ADMIN";
+        if (user instanceof com.ndajee.userservice.entities.Caravannier)
+            return "CARAVANNIER";
         return "INCONNU";
     }
 

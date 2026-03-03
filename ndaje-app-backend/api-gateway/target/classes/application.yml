@@ -24,11 +24,23 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
-        # Route Trip Service
-        - id: trip-service
+        # Route Trip Service (trajets + notations)
+        - id: trip-service-trips
           uri: lb://trip-service
           predicates:
             - Path=/api/trips/**
+
+        # Route Notations → Trip Service (migration depuis reservation-service)
+        - id: trip-service-notations
+          uri: lb://trip-service
+          predicates:
+            - Path=/api/notations/**
+
+        # Route Caravanes → Trip Service
+        - id: trip-service-caravanes
+          uri: lb://trip-service
+          predicates:
+            - Path=/api/caravanes/**
 
         # Route User Service
         - id: user-service
@@ -36,23 +48,17 @@ spring:
           predicates:
             - Path=/api/users/**, /api/admin/**
 
-        # Route Document Service
-        - id: document-service
-          uri: lb://document-service
-          predicates:
-            - Path=/api/documents/**
-
-        # Route Reservation Service
-        - id: reservation-service
-          uri: lb://reservation-service
-          predicates:
-            - Path=/api/reservations/**
-
-        # Route Car Service
+        # Route Car Service (véhicules + documents véhicules intégrés)
         - id: car-service
           uri: lb://car-service
           predicates:
             - Path=/api/vehicules/**
+
+        # Route Reservation Service (Désormais géré par trip-service)
+        - id: reservation-service-redirect
+          uri: lb://trip-service
+          predicates:
+            - Path=/api/reservations/**
 
 eureka:
   instance:

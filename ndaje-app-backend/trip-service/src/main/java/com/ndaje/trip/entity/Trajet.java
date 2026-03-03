@@ -2,40 +2,25 @@ package com.ndaje.trip.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "trajets")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Trajet {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@SuperBuilder
+public class Trajet extends AbstractVoyage {
 
     @Column(nullable = false)
     private String driverId; // Changed from Long conducteurId to String for Keycloak integration
 
     @Column(nullable = false)
     private String vehicleId;
-
-    @Column(nullable = false)
-    private String depart;
-
-    @Column(nullable = false)
-    private String arrivee;
-
-    @Column(nullable = false)
-    private LocalDateTime dateDepart;
-
-    private int placesDisponibles;
 
     private double prix;
 

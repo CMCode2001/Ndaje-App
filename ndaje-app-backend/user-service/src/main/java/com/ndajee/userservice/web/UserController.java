@@ -18,7 +18,8 @@ import com.ndajee.userservice.dto.UpdateProfileRequest;
 import com.ndajee.userservice.dto.LogoutRequest;
 
 /**
- * Contrôleur gérant les opérations utilisateurs standards : inscription, connexion, profil.
+ * Contrôleur gérant les opérations utilisateurs standards : inscription,
+ * connexion, profil.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -41,11 +42,17 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    /** Inscription d'un caravannier - Création Keycloak + BDD locale */
+    @PostMapping("/register/caravannier")
+    public ResponseEntity<UserResponse> registerCaravannier(@Valid @RequestBody UserRegistrationRequest request) {
+        UserResponse response = userService.registerCaravannier(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
-    
     /** Authentification via Keycloak et retour du token JWT */
     @PostMapping("/login")
-    public ResponseEntity<com.ndajee.userservice.dto.TokenResponse> login(@Valid @RequestBody com.ndajee.userservice.dto.LoginRequest request) {
+    public ResponseEntity<com.ndajee.userservice.dto.TokenResponse> login(
+            @Valid @RequestBody com.ndajee.userservice.dto.LoginRequest request) {
         return ResponseEntity.ok(userService.login(request));
     }
 
@@ -71,7 +78,8 @@ public class UserController {
 
     /** Mise à jour des informations de profil (Synchronisé Keycloak + BDD) */
     @org.springframework.web.bind.annotation.PutMapping("/{id}/profile")
-    public ResponseEntity<UserResponse> updateProfile(@org.springframework.web.bind.annotation.PathVariable String id, @Valid @RequestBody com.ndajee.userservice.dto.UpdateProfileRequest request) {
+    public ResponseEntity<UserResponse> updateProfile(@org.springframework.web.bind.annotation.PathVariable String id,
+            @Valid @RequestBody com.ndajee.userservice.dto.UpdateProfileRequest request) {
         UserResponse response = userService.updateProfile(id, request);
         return ResponseEntity.ok(response);
     }

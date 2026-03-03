@@ -55,11 +55,8 @@ start "User Service" cmd /k "mvn spring-boot:run -f user-service/pom.xml"
 echo 4. Lancement de Trip Service (Port 8084)...
 start "Trip Service" cmd /k "mvn spring-boot:run -f trip-service/pom.xml"
 
-echo 5. Lancement de Document Service (Port 8086)...
-start "Document Service" cmd /k "mvn spring-boot:run -f document-service/pom.xml"
-
-echo 6. Lancement de Reservation Service (Port 8088)...
-start "Reservation Service" cmd /k "mvn spring-boot:run -f reservation-service/pom.xml"
+echo 5. Lancement de Car Service (Port 8089)...
+start "Car Service" cmd /k "mvn spring-boot:run -f car-service/pom.xml"
 
 echo.
 echo ========================================================
@@ -80,8 +77,7 @@ taskkill /FI "WINDOWTITLE eq Eureka Server*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq API Gateway*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq User Service*" /T /F >nul 2>&1
 taskkill /FI "WINDOWTITLE eq Trip Service*" /T /F >nul 2>&1
-taskkill /FI "WINDOWTITLE eq Document Service*" /T /F >nul 2>&1
-taskkill /FI "WINDOWTITLE eq Reservation Service*" /T /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq Car Service*" /T /F >nul 2>&1
 
 echo Tous les services ont ete arretes.
 pause

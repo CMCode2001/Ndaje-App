@@ -1,0 +1,24 @@
+# Comportement par défaut : Git détectera automatiquement les fichiers texte
+# et normalisera les fins de ligne en LF dans le dépôt.
+* text=auto
+
+# Forcer l'utilisation de LF pour les fichiers de code et de configuration
+# (Cela inclut votre fichier realm-export.json)
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+
+# Forcer l'utilisation de CRLF pour les scripts spécifiques à Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Déclarer les fichiers binaires pour que Git ne modifie jamais leurs fins de ligne
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
