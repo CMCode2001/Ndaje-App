@@ -12,34 +12,29 @@ import java.net.URI;
 
 @Configuration
 public class S3Config {
+        @Value("${minio.access-key}")
+        private String accessKey;
 
-    @Value("${cloudflare.r2.access-key}")
-    private String accessKey;
+        @Value("${minio.secret-key}")
+        private String secretKey;
 
-    @Value("${cloudflare.r2.secret-key}")
-    private String secretKey;
+        @Value("${minio.endpoint}")
+        private String endpoint;
 
-    @Value("${cloudflare.r2.endpoint}")
-    private String endpoint;
+        @Bean
+        public S3Client s3Client() {
 
-    @Bean
-    public S3Client s3Client() {
+                AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
 
-        AwsBasicCredentials credentials =
-                AwsBasicCredentials.create(accessKey, secretKey);
-
-        return S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of("auto")) // OBLIGATOIRE POUR R2
-                .credentialsProvider(
-                        StaticCredentialsProvider.create(credentials)
-                )
-                .serviceConfiguration(software.amazon.awssdk.services.s3.S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .chunkedEncodingEnabled(false)
-                        .build())
-                .build();
-    }
+                return S3Client.builder()
+                                .endpointOverride(URI.create(endpoint))
+                                .region(Region.of("us-east-1")) // Generic region for MinIO
+                                .credentialsProvider(
+                                                StaticCredentialsProvider.create(credentials))
+                                .serviceConfiguration(software.amazon.awssdk.services.s3.S3Configuration.builder()
+                                                .pathStyleAccessEnabled(true)
+                                                .chunkedEncodingEnabled(false)
+                                                .build())
+                                .build();
+        }
 }
-
-

@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * Service de bas niveau gérant les interactions directes avec le stockage
- * Cloudflare R2 (API compatible S3).
+ * MinIO (API compatible S3).
  * S'occupe de l'upload, du téléchargement et de la suppression physique des
  * fichiers.
  */
@@ -27,15 +27,15 @@ public class S3StorageService {
 
     private final S3Client s3Client;
 
-    @Value("${cloudflare.r2.bucket}")
+    @Value("${minio.bucket}")
     private String bucketName;
 
     /**
-     * Upload un fichier vers Cloudflare R2 et génère une clé unique.
+     * Upload un fichier vers MinIO et génère une clé unique.
      * 
      * @param file          Fichier multipart à uploader
      * @param utilisateurId ID de l'utilisateur pour l'organisation des dossiers
-     *                      dans R2
+     *                      dans MinIO
      * @return Clé unique de l'objet stocké (S3 Key)
      * @throws StorageException en cas d'erreur de lecture ou d'accès S3
      */
@@ -77,7 +77,7 @@ public class S3StorageService {
     }
 
     /**
-     * Télécharge le contenu d'un fichier depuis Cloudflare R2.
+     * Télécharge le contenu d'un fichier depuis MinIO.
      * 
      * @param s3Key Clé unique du fichier
      * @return Tableau d'octets contenant les données du fichier
@@ -107,7 +107,7 @@ public class S3StorageService {
     }
 
     /**
-     * Supprime un fichier du stockage Cloudflare R2.
+     * Supprime un fichier du stockage MinIO.
      * 
      * @param s3Key Clé unique du fichier à supprimer
      * @throws StorageException en cas d'échec de la suppression

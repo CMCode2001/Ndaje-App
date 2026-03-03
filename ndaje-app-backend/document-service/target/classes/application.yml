@@ -27,24 +27,12 @@ spring:
 server:
   port: 8086
 
-# Cloudflare R2 Configuration (S3-compatible)
-cloudflare:
-  r2:
-    account-id: ${R2_ACCOUNT_ID}
-    access-key: ${R2_ACCESS_KEY}
-    secret-key: ${R2_SECRET_KEY}
-    endpoint: ${R2_ENDPOINT}
-    bucket: ${R2_BUCKET}
-    region: auto
-
-# Mapping for S3 Client (compatibility layer)
-# aws:
-#   s3:
-#     bucket-name: ${cloudflare.r2.bucket}
-#     region: ${cloudflare.r2.region}
-#     access-key: ${cloudflare.r2.access-key}
-#     secret-key: ${cloudflare.r2.secret-key}
-#     endpoint: ${cloudflare.r2.endpoint}
+# MinIO Configuration (S3-compatible)
+minio:
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  endpoint: ${MINIO_ENDPOINT}
+  bucket: ${MINIO_BUCKET}
 
 # Eureka Client Configuration
 eureka:

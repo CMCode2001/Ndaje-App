@@ -18,11 +18,10 @@ set RESERVATION_DB_URL=jdbc:postgresql://localhost:5432/ndaje-reservation-db
 set Document_DB_URL=jdbc:postgresql://localhost:5432/ndaje-document-db
 set Car_DB_URL=jdbc:postgresql://localhost:5432/ndaje-car-db
 
-REM Cloudflare R2 Configuration
-set R2_ACCOUNT_ID=eb29816742395623567cbace0d59f0d0
-set R2_ACCESS_KEY=2c2b6024a91313a4670adc0b7237bf7b
-set R2_SECRET_KEY=e6e2385faddab303a19a22708447ae0c2d179948ebbdabaad0a96b15e42228ad
-set R2_BUCKET=ndajee-documents
-set R2_ENDPOINT=https://eb29816742395623567cbace0d59f0d0.r2.cloudflarestorage.com
+REM MinIO Configuration
+set MINIO_ACCESS_KEY=minioadmin
+set MINIO_SECRET_KEY=minioadmin
+set MINIO_ENDPOINT=http://localhost:9002
+set MINIO_BUCKET=ndajee-bucket-document
 
 echo Environment variables loaded successfully!

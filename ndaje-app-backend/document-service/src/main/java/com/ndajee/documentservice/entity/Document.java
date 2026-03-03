@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * Entité représentant un document stocké dans le système.
  * Contient les métadonnées du fichier et sa référence vers le stockage
- * Cloudflare R2/S3.
+ * MinIO/S3.
  */
 @Entity
 @Table(name = "documents")
@@ -28,7 +28,7 @@ public class Document {
     private String nom;
 
     /**
-     * Clé unique de l'objet dans le stockage Cloudflare R2 (ex:
+     * Clé unique de l'objet dans le stockage MinIO (ex:
      * userId/uuid-filename)
      */
     @Column(nullable = false, unique = true)

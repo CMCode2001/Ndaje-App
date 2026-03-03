@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 /**
  * Service métier orchestrant la gestion des documents.
  * Combine les opérations de base de données (métadonnées) et le stockage
- * Cloudflare R2 (fichiers).
+ * MinIO (fichiers).
  */
 @Service
 @RequiredArgsConstructor

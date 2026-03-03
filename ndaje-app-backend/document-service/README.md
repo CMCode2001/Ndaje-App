@@ -1,11 +1,11 @@
 # Document Service
 
-Microservice Spring Boot pour la gestion de documents utilisateurs avec stockage **Cloudflare R2**.
+Microservice Spring Boot pour la gestion de documents utilisateurs avec stockage **MinIO**.
 
 ## Fonctionnalités
 
-- ✅ Upload de documents vers Cloudflare R2
-- ✅ Téléchargement de documents depuis R2
+- ✅ Upload de documents vers MinIO
+- ✅ Téléchargement de documents depuis MinIO
 - ✅ Suppression de documents (R2 + métadonnées)
 - ✅ Liste des documents (tous ou par utilisateur)
 - ✅ Gestion des métadonnées en base de données (H2/PostgreSQL)
@@ -29,55 +29,50 @@ document-service/
 
 - Java 21
 - Maven 3.8+
-- Compte Cloudflare avec R2 activé
-- Bucket R2 créé
+- Service MinIO installé et accessible
+- Bucket MinIO créé
 
-## Configuration Cloudflare R2
+## Configuration MinIO
 
-### 1. Créer un bucket R2
+### 1. Créer un bucket MinIO
 
-1. Connectez-vous à [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. Allez dans **R2** dans le menu latéral
+1. Connectez-vous à la console d'administration MinIO
+2. Allez dans **Buckets** dans le menu latéral
 3. Cliquez sur **Create bucket**
 4. Nommez votre bucket: `ndajee-documents`
-5. Choisissez la région (ou laissez "Automatic")
 
-### 2. Créer des API Tokens R2
+### 2. Créer des Access Keys MinIO
 
-1. Dans R2, allez dans **Manage R2 API Tokens**
-2. Cliquez sur **Create API Token**
-3. Donnez un nom: `ndajee-document-service`
-4. Permissions: **Object Read & Write**
-5. Notez:
-   - **Access Key ID**
-   - **Secret Access Key**
-   - **Account ID** (visible dans l'URL du dashboard)
+1. Dans la console MinIO, allez dans **Access Keys**
+2. Cliquez sur **Create Access Key**
+3. Notez:
+   - **Access Key**
+   - **Secret Key**
 
 ### 3. Configurer les variables d'environnement
 
 ```bash
 # Windows (PowerShell)
-$env:R2_BUCKET_NAME="ndajee-documents"
-$env:R2_ACCOUNT_ID="votre-account-id"
-$env:R2_ACCESS_KEY_ID="votre-access-key"
-$env:R2_SECRET_ACCESS_KEY="votre-secret-key"
+$env:MINIO_BUCKET="ndajee-documents"
+$env:MINIO_ACCESS_KEY="votre-access-key"
+$env:MINIO_SECRET_KEY="votre-secret-key"
+$env:MINIO_ENDPOINT="http://localhost:9000"
 
 # Linux/Mac
-export R2_BUCKET_NAME=ndajee-documents
-export R2_ACCOUNT_ID=votre-account-id
-export R2_ACCESS_KEY_ID=votre-access-key
-export R2_SECRET_ACCESS_KEY=votre-secret-key
+export MINIO_BUCKET=ndajee-documents
+export MINIO_ACCESS_KEY=votre-access-key
+export MINIO_SECRET_KEY=votre-secret-key
+export MINIO_ENDPOINT=http://localhost:9000
 ```
 
 Ou modifiez directement `application.yml`:
 
 ```yaml
-cloudflare:
-  r2:
-    bucket-name: ndajee-documents
-    account-id: votre-account-id
-    access-key: votre-access-key
-    secret-key: votre-secret-key
+minio:
+  bucket: ndajee-documents
+  endpoint: http://localhost:9000
+  access-key: votre-access-key
+  secret-key: votre-secret-key
 ```
 
 ## Démarrage
@@ -207,27 +202,26 @@ logging:
 
 ### Erreur: "Unable to load credentials from system settings"
 
-→ Vérifiez que les variables d'environnement R2 sont définies (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`)
+→ Vérifiez que les variables d'environnement MinIO sont définies (`MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`)
 
 ### Erreur: "The specified bucket does not exist"
 
-→ Créez le bucket R2 dans le dashboard Cloudflare ou vérifiez le nom dans `application.yml`
+→ Créez le bucket MinIO dans la console d'administration ou vérifiez le nom dans `application.yml`
 
 ### Erreur: "Access Denied" ou "403 Forbidden"
 
-→ Vérifiez que votre API Token R2 a les permissions **Object Read & Write**
+→ Vérifiez vos Access Keys MinIO.
 
-### Erreur: "Invalid endpoint"
+### Erreur: "Connection refused"
 
-→ Vérifiez que `R2_ACCOUNT_ID` est correctement défini (trouvable dans l'URL du dashboard Cloudflare)
+→ Vérifiez que le service MinIO est bien en cours de démarrage ou que le endpoint fourni dans `application.yml` (`MINIO_ENDPOINT`) est correct.
 
-## Avantages de Cloudflare R2
+## Avantages de MinIO
 
-- ✅ **Gratuit** : 10 GB de stockage gratuit par mois
-- ✅ **Pas de frais de sortie** : Transferts de données gratuits (contrairement à AWS S3)
+- ✅ **Self-hosted** : Contrôle total sur les données
+- ✅ **Haute performance** : Conçu pour être extrêmement rapide
 - ✅ **Compatible S3** : Utilise la même API qu'AWS S3
-- ✅ **Rapide** : Réseau global Cloudflare
-- ✅ **Simple** : Pas de configuration de régions complexes
+- ✅ **Facile à déployer** : Déploiement via conteneur Docker ou binaire unique
 
 ## Technologies
 
