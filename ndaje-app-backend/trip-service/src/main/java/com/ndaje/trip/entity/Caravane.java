@@ -28,7 +28,7 @@ public class Caravane extends AbstractVoyage {
 
     /** Identifiant Keycloak du caravannier organisateur */
     @Column(nullable = false)
-    private String caravannierI;
+    private String caravannierId;
 
     /** Nom/titre de la caravane (ex: "Caravane Dakar-Tambacounda") */
     @Column(nullable = false)

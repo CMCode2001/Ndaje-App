@@ -13,7 +13,7 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./realm-export.json:/opt/keycloak/data/import/realm.json
-  
+
   minio:
     image: minio/minio:latest
     container_name: ndaje-minio

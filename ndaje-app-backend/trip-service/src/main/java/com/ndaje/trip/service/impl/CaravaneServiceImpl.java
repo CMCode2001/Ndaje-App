@@ -32,7 +32,7 @@ public class CaravaneServiceImpl implements CaravaneService {
         }
 
         Caravane caravane = Caravane.builder()
-                .caravannierI(request.getCaravannierId())
+                .caravannierId(request.getCaravannierId())
                 .nom(request.getNom())
                 .description(request.getDescription())
                 .depart(request.getDepart())
@@ -50,7 +50,7 @@ public class CaravaneServiceImpl implements CaravaneService {
 
         Caravane saved = caravaneRepository.save(caravane);
         log.info("Caravane '{}' créée par {} avec {} places",
-                saved.getNom(), saved.getCaravannierI(), saved.getMaxParticipants());
+                saved.getNom(), saved.getCaravannierId(), saved.getMaxParticipants());
 
         return toResponse(saved);
     }
@@ -92,7 +92,7 @@ public class CaravaneServiceImpl implements CaravaneService {
         Caravane caravane = caravaneRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Caravane introuvable: " + id));
 
-        if (!caravane.getCaravannierI().equals(caravannierId)) {
+        if (!caravane.getCaravannierId().equals(caravannierId)) {
             throw new BusinessException("Vous n'êtes pas autorisé à annuler cette caravane.");
         }
 
@@ -109,7 +109,7 @@ public class CaravaneServiceImpl implements CaravaneService {
     private CaravaneResponse toResponse(Caravane c) {
         return CaravaneResponse.builder()
                 .id(c.getId())
-                .caravannierId(c.getCaravannierI())
+                .caravannierId(c.getCaravannierId())
                 .nom(c.getNom())
                 .description(c.getDescription())
                 .depart(c.getDepart())
