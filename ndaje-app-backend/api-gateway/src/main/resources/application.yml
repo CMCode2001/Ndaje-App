@@ -42,7 +42,20 @@ spring:
           predicates:
             - Path=/api/caravanes/**
 
-        # Route User Service
+        # Route User Service (Avec Rate Limiting sur /api/users/login)
+        - id: user-service-login
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/login
+            - Method=POST
+          filters:
+            - name: RequestRateLimiter
+              args:
+                "[redis-rate-limiter.replenishRate]": 5
+                "[redis-rate-limiter.burstCapacity]": 10
+                "[redis-rate-limiter.requestedTokens]": 1
+                key-resolver: "#{@ipKeyResolver}"
+        
         - id: user-service
           uri: lb://user-service
           predicates:

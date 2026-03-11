@@ -30,13 +30,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-    if (savedToken) {
-      setToken(savedToken);
-    }
+    // Token is now managed securely by HttpOnly cookies
     setIsLoading(false);
   }, []);
 
@@ -59,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await fetch(`${BASE_URL_USERS}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(credentials),
       });
 
@@ -79,7 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let fullUserData = responseData.user || responseData.data || responseData;
       try {
         const profileResponse = await fetch(`${BASE_URL_USERS}/${userId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          // Token is now automatically sent via HttpOnly Cookie
+          credentials: 'include'
         });
         if (profileResponse.ok) {
           fullUserData = await profileResponse.json();
@@ -104,9 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       setUser(sessionUser);
-      setToken(token);
+      setToken(token); // On conserve en mémoire (state React) pour affichage si besoin, mais plus dans localStorage
       localStorage.setItem('user', JSON.stringify(sessionUser));
-      localStorage.setItem('token', token);
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await fetch(`${BASE_URL_USERS}/register/${role}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -139,7 +138,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(sessionUser);
       setToken(token);
       localStorage.setItem('user', JSON.stringify(sessionUser));
-      if (token) localStorage.setItem('token', token);
     } finally {
       setIsLoading(false);
     }
@@ -151,10 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await fetch(`${BASE_URL_USERS}/${user.id}/profile`, {
         method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+        headers: {
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(updatedData),
       });
 
@@ -167,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Utiliser la réponse du backend si elle contient l'utilisateur, sinon merger localement
       const updatedUserFromBackend = responseData.user || responseData.data || responseData;
-      
+
       const sessionUser = {
         ...user, // Garder les infos actuelles (comme l'ID) si elles manquent dans la réponse
         ...updatedUserFromBackend,
@@ -187,7 +185,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
+
+    // Notify backend to clear cookies and invalidate refresh token
+    fetch(`${BASE_URL_USERS}/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    }).catch(err => console.error("Logout API failed", err));
   };
 
   return (

@@ -32,9 +32,7 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const response = await fetch(BASE_URL_ADMIN, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       if (!response.ok) throw new Error("Erreur lors de la récupération des utilisateurs");
       const data = await response.json();
@@ -54,7 +52,7 @@ export default function AdminPage() {
   }, [token]);
 
   useEffect(() => {
-    let result = users.filter(user => 
+    let result = users.filter(user =>
       (user.prenom + " " + user.nom).toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -75,12 +73,10 @@ export default function AdminPage() {
     try {
       const response = await fetch(`${BASE_URL_ADMIN}/${id}/status?active=${!currentStatus}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       if (!response.ok) throw new Error();
-      
+
       toast.success(currentStatus ? "Utilisateur désactivé" : "Utilisateur activé");
       // Update both active and enabled to be safe
       setUsers(users.map(u => u.id === id ? { ...u, active: !currentStatus, actif: !currentStatus, enabled: !currentStatus } : u));
@@ -91,16 +87,14 @@ export default function AdminPage() {
 
   const deleteUser = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) return;
-    
+
     try {
       const response = await fetch(`${BASE_URL_ADMIN}/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       });
       if (!response.ok) throw new Error();
-      
+
       toast.success("Utilisateur supprimé");
       setUsers(users.filter(u => u.id !== id));
     } catch {
@@ -141,14 +135,14 @@ export default function AdminPage() {
   return (
     <div className="flex h-screen bg-[#050814] text-white">
       <AdminSidebar />
-      
+
       <main className="flex-1 overflow-y-auto p-10 space-y-10">
         <header className="flex justify-between items-center">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold">Administration</h1>
             <p className="text-white/40">Gestion globale de la plateforme Ndaje.</p>
           </div>
-          <button 
+          <button
             onClick={fetchUsers}
             className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all"
             title="Rafraîchir"
@@ -166,116 +160,116 @@ export default function AdminPage() {
 
         {/* Content Area */}
         <div className="space-y-6">
-           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-center gap-4">
-                 <h2 className="text-xl font-bold">Utilisateurs</h2>
-                 <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl space-x-1">
-                    {(['ALL', 'DRIVER', 'PASSENGER'] as const).map(role => (
-                       <button
-                          key={role}
-                          onClick={() => setRoleFilter(role)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                             roleFilter === role ? "bg-primary text-white" : "text-white/40 hover:text-white"
-                          }`}
-                       >
-                          {role === 'ALL' ? 'Tous' : role === 'DRIVER' ? 'Conducteurs' : 'Passagers'}
-                       </button>
-                    ))}
-                 </div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-bold">Utilisateurs</h2>
+              <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl space-x-1">
+                {(['ALL', 'DRIVER', 'PASSENGER'] as const).map(role => (
+                  <button
+                    key={role}
+                    onClick={() => setRoleFilter(role)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${roleFilter === role ? "bg-primary text-white" : "text-white/40 hover:text-white"
+                      }`}
+                  >
+                    {role === 'ALL' ? 'Tous' : role === 'DRIVER' ? 'Conducteurs' : 'Passagers'}
+                  </button>
+                ))}
               </div>
-              
-              <div className="flex gap-3 w-full md:w-auto">
-                 <div className="relative flex-1 md:w-64">
-                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/40" />
-                    <Input 
-                      placeholder="Nom, email..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 bg-white/5 border-white/10 h-10 rounded-xl focus:ring-primary/20" 
-                    />
-                 </div>
-                 <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                    <Filter className="w-5 h-5 text-white/60" />
-                 </button>
+            </div>
+
+            <div className="flex gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/40" />
+                <Input
+                  placeholder="Nom, email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/10 h-10 rounded-xl focus:ring-primary/20"
+                />
               </div>
-           </div>
+              <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                <Filter className="w-5 h-5 text-white/60" />
+              </button>
+            </div>
+          </div>
 
-           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden relative min-h-[400px]">
-              {loading && (
-                <div className="absolute inset-0 bg-[#050814]/50 backdrop-blur-sm z-20 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                </div>
-              )}
+          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden relative min-h-[400px]">
+            {loading && (
+              <div className="absolute inset-0 bg-[#050814]/50 backdrop-blur-sm z-20 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+            )}
 
-              <table className="w-full text-left">
-                 <thead>
-                    <tr className="border-b border-white/10 bg-white/5 fontLogo text-white/40">
-                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Utilisateur</th>
-                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Rôle</th>
-                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Statut</th>
-                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date</th>
-                       <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Actions</th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5 fontLogo text-white/40">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Utilisateur</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Rôle</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Statut</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredUsers.length === 0 && !loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-20 text-center text-white/40 italic">
+                      Aucun utilisateur trouvé.
+                    </td>
+                  </tr>
+                ) : filteredUsers.map((user) => {
+                  const isActive = getStatus(user);
+                  return (
+                    <tr key={user.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center font-bold text-sm shadow-lg text-white">
+                            {user.prenom ? user.prenom.charAt(0) : ''}{user.nom ? user.nom.charAt(0) : ''}
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-white">{user.prenom} {user.nom}</p>
+                            <p className="text-xs text-white/40">{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getRoleBadgeStyle(user.role)}`}>
+                          {getRoleLabel(user.role)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ring-4 ring-white/5 ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
+                          <span className="text-sm text-white/60">{isActive ? 'Actif' : 'Inactif'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-white/40 font-mono">
+                        {user.dateCreation ? new Date(user.dateCreation).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-right pr-8">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => toggleStatus(user.id, isActive)}
+                            className={`p-2 rounded-lg transition-all ${isActive ? 'hover:bg-red-500/10 text-white/40 hover:text-red-400' : 'hover:bg-green-500/10 text-white/40 hover:text-green-400'}`}
+                            title={isActive ? "Désactiver" : "Activer"}
+                          >
+                            <Power className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-500 transition-all"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                 </thead>
-                 <tbody className="divide-y divide-white/5">
-                    {filteredUsers.length === 0 && !loading ? (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-20 text-center text-white/40 italic">
-                          Aucun utilisateur trouvé.
-                        </td>
-                      </tr>
-                    ) : filteredUsers.map((user) => {
-                       const isActive = getStatus(user);
-                       return (
-                       <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                          <td className="px-6 py-4">
-                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center font-bold text-sm shadow-lg text-white">
-                                   {user.prenom ? user.prenom.charAt(0) : ''}{user.nom ? user.nom.charAt(0) : ''}
-                                </div>
-                                <div>
-                                   <p className="font-bold text-sm text-white">{user.prenom} {user.nom}</p>
-                                   <p className="text-xs text-white/40">{user.email}</p>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getRoleBadgeStyle(user.role)}`}>
-                                {getRoleLabel(user.role)}
-                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ring-4 ring-white/5 ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
-                                <span className="text-sm text-white/60">{isActive ? 'Actif' : 'Inactif'}</span>
-                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-white/40 font-mono">
-                             {user.dateCreation ? new Date(user.dateCreation).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 text-right pr-8">
-                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button 
-                                  onClick={() => toggleStatus(user.id, isActive)}
-                                  className={`p-2 rounded-lg transition-all ${isActive ? 'hover:bg-red-500/10 text-white/40 hover:text-red-400' : 'hover:bg-green-500/10 text-white/40 hover:text-green-400'}`}
-                                  title={isActive ? "Désactiver" : "Activer"}
-                                >
-                                   <Power className="w-5 h-5" />
-                                </button>
-                                <button 
-                                  onClick={() => deleteUser(user.id)}
-                                  className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-500 transition-all"
-                                  title="Supprimer"
-                                >
-                                   <Trash2 className="w-5 h-5" />
-                                </button>
-                             </div>
-                          </td>
-                       </tr>
-                    );})}
-                 </tbody>
-              </table>
-           </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
     </div>

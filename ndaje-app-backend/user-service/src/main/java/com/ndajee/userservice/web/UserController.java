@@ -53,14 +53,71 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<com.ndajee.userservice.dto.TokenResponse> login(
             @Valid @RequestBody com.ndajee.userservice.dto.LoginRequest request) {
-        return ResponseEntity.ok(userService.login(request));
+
+        com.ndajee.userservice.dto.TokenResponse tokenResponse = userService.login(request);
+
+        org.springframework.http.ResponseCookie jwtCookie = org.springframework.http.ResponseCookie
+                .from("accessToken", tokenResponse.getAccessToken())
+                .httpOnly(true)
+                .secure(false) // Mettre à true en production HTTPS
+                .path("/")
+                .maxAge(tokenResponse.getExpiresIn())
+                .sameSite("Strict")
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie
+                .from("refreshToken", tokenResponse.getRefreshToken())
+                .httpOnly(true)
+                .secure(false) // Mettre à true en production HTTPS
+                .path("/")
+                .maxAge(Long.parseLong(tokenResponse.getRefreshExpiresIn()))
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(tokenResponse);
     }
 
     /** Déconnexion (invalidation refresh token) */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
-        userService.logout(request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> logout(
+            @RequestBody(required = false) LogoutRequest request,
+            @org.springframework.web.bind.annotation.CookieValue(name = "refreshToken", required = false) String refreshTokenCookie) {
+
+        String tokenToRevoke = (request != null && request.getRefreshToken() != null)
+                ? request.getRefreshToken()
+                : refreshTokenCookie;
+
+        if (tokenToRevoke != null && !tokenToRevoke.isEmpty()) {
+            LogoutRequest dummyRequest = new LogoutRequest();
+            dummyRequest.setRefreshToken(tokenToRevoke);
+            userService.logout(dummyRequest);
+        }
+
+        org.springframework.http.ResponseCookie jwtCookie = org.springframework.http.ResponseCookie
+                .from("accessToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie
+                .from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.noContent()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .build();
     }
 
     /** Envoi d'un email de réinitialisation de mot de passe (via Keycloak) */

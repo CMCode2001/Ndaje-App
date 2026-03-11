@@ -109,6 +109,9 @@ class UserControllerTest {
         loginRequest.setPassword("password");
         TokenResponse tokenResponse = new TokenResponse();
         tokenResponse.setAccessToken("test-token");
+        tokenResponse.setRefreshToken("mock-refresh-token");
+        tokenResponse.setExpiresIn(3600L);
+        tokenResponse.setRefreshExpiresIn("7200");
 
         when(userService.login(any(LoginRequest.class))).thenReturn(tokenResponse);
 
