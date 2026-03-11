@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,5 +27,6 @@ public class CreateNotationRequest {
     @Max(value = 5, message = "La note doit être au maximum 5")
     private int etoiles;
 
+    @Size(max = 500, message = "Le commentaire ne doit pas dépasser 500 caractères")
     private String commentaire;
 }

@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -21,13 +22,13 @@ public class VehiculeController {
     private final VehiculeService vehiculeService;
 
     @PostMapping
-    public ResponseEntity<VehiculeResponse> createVehicule(@RequestBody VehiculeRequest vehiculeRequest) {
+    public ResponseEntity<VehiculeResponse> createVehicule(@Valid @RequestBody VehiculeRequest vehiculeRequest) {
         return new ResponseEntity<>(vehiculeService.createVehicule(vehiculeRequest), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<VehiculeResponse> updateVehicule(@PathVariable Long id,
-            @RequestBody VehiculeRequest vehiculeRequest) {
+            @Valid @RequestBody VehiculeRequest vehiculeRequest) {
         return ResponseEntity.ok(vehiculeService.updateVehicule(id, vehiculeRequest));
     }
 
