@@ -44,3 +44,4 @@ C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-ser
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\entities\Conducteur.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\service\UserDocumentService.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\storage\S3StorageService.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\security\TestSecurityConfig.java

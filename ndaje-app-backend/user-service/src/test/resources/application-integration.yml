@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb_user;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+
+# Dsactive le Keycloak pour les tests
+keycloak:
+  auth-server-url: http://localhost:9999
+  realm: test-realm
+  resource: test-client
+
+minio:
+  access-key: test-access-key
+  secret-key: test-secret-key
+  endpoint: http://localhost:9000
+  bucket: test-bucket
+
+app:
+  encryption:
+    key: test-key-1234567
+
+eureka:
+  client:
+    enabled: false

@@ -3,6 +3,7 @@ package com.ndajee.carservice.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@Profile("!integration") // Non chargé pendant les tests d'intégration
 public class SecurityConfig {
 
     @Autowired
@@ -30,10 +32,10 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(fo -> fo.disable()))
                 .authorizeHttpRequests(ar -> ar
                         .requestMatchers("/h2-console/**").permitAll()
-                                                                      
-                        //On laisse l'accès libre pour le moment, ou on sécurise
+
+                        // On laisse l'accès libre pour le moment, ou on sécurise
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                                                                          // 
+                        //
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o2 -> o2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)))
                 .build();

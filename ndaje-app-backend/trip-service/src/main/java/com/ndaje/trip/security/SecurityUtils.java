@@ -13,10 +13,19 @@ public class SecurityUtils {
      */
     public static String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthenticationToken jwtToken) {
-            return jwtToken.getName(); // Usually 'sub' claim
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BusinessException("User is not authenticated");
         }
-        throw new BusinessException("User is not authenticated");
+        // JWT token (production): use the 'sub' claim
+        if (authentication instanceof JwtAuthenticationToken jwtToken) {
+            return jwtToken.getName();
+        }
+        // Fallback for non-JWT-based authentications (e.g. test mocks, basic auth)
+        String name = authentication.getName();
+        if (name == null || name.isBlank()) {
+            throw new BusinessException("User is not authenticated");
+        }
+        return name;
     }
 
     /**

@@ -4,6 +4,7 @@ import com.ndajee.carservice.domain.Vehicule;
 import com.ndajee.carservice.dto.DocumentResponse;
 import com.ndajee.carservice.dto.VehiculeRequest;
 import com.ndajee.carservice.dto.VehiculeResponse;
+import com.ndajee.carservice.exception.BusinessException;
 import com.ndajee.carservice.exception.ResourceNotFoundException;
 import com.ndajee.carservice.mapper.VehiculeMapper;
 import com.ndajee.carservice.repository.VehiculeRepository;
@@ -23,6 +24,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@lombok.extern.slf4j.Slf4j
 public class VehiculeServiceImpl implements VehiculeService {
 
     private final VehiculeRepository vehiculeRepository;
@@ -41,7 +43,7 @@ public class VehiculeServiceImpl implements VehiculeService {
         }
 
         if (vehicule.getDriverId() == null || vehicule.getDriverId().isBlank()) {
-            throw new RuntimeException("Driver ID is required and could not be determined from security context");
+            throw new BusinessException("Driver ID is required and could not be determined from security context");
         }
 
         vehicule.setStatutVerification(com.ndajee.carservice.domain.StatutVerificationVehicule.EN_ATTENTE);
@@ -81,11 +83,11 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public void deleteVehicule(Long id) {
-        vehiculeRepository.findById(id).ifPresent(vehicule -> {
-            // Enforce BOLA/IDOR protection
-            SecurityUtils.verifyOwnership(vehicule.getDriverId());
-            vehiculeRepository.deleteById(id);
-        });
+        Vehicule vehicule = vehiculeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + id));
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(vehicule.getDriverId());
+        vehiculeRepository.deleteById(id);
     }
 
     @Override
