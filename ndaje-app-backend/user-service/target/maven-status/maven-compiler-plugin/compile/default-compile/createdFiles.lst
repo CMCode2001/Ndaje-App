@@ -30,6 +30,7 @@ com\ndajee\userservice\web\AdminController.class
 com\ndajee\userservice\repositories\CaravannierRepository.class
 com\ndajee\userservice\exception\BusinessException.class
 com\ndajee\userservice\entities\UtilisateurDocument.class
+com\ndajee\userservice\security\SecurityUtils.class
 com\ndajee\userservice\service\AdminService.class
 com\ndajee\userservice\service\KeycloakService.class
 com\ndajee\userservice\storage\StorageException.class
@@ -37,6 +38,7 @@ com\ndajee\userservice\repositories\AdminRepository.class
 com\ndajee\userservice\entities\StatutDocument.class
 com\ndajee\userservice\repositories\PassagerRepository.class
 com\ndajee\userservice\dto\TokenResponse.class
+com\ndajee\userservice\config\EncryptionConverter.class
 com\ndajee\userservice\config\DataInitializer.class
 com\ndajee\userservice\storage\S3Config.class
 com\ndajee\userservice\entities\Utilisateur.class

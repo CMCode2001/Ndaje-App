@@ -54,5 +54,6 @@ com\ndaje\trip\entity\StatutTrajet.class
 com\ndaje\trip\controller\NotationController.class
 com\ndaje\trip\entity\Trajet.class
 com\ndaje\trip\dto\response\TripResponse$TripResponseBuilder.class
+com\ndaje\trip\security\SecurityUtils.class
 com\ndaje\trip\entity\Position.class
 com\ndaje\trip\exception\GlobalExceptionHandler.class

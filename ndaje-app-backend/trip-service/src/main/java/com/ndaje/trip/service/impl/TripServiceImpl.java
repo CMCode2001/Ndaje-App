@@ -10,6 +10,7 @@ import com.ndaje.trip.service.TripService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ndaje.trip.security.SecurityUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -106,6 +107,9 @@ public class TripServiceImpl implements TripService {
         Trajet trajet = tripRepository.findById(id)
                 .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + id));
 
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(trajet.getDriverId());
+
         trajet.setStatutTrajet(status);
         Trajet updatedTrajet = tripRepository.save(trajet);
         return mapToTripResponse(updatedTrajet);
@@ -115,6 +119,9 @@ public class TripServiceImpl implements TripService {
     public TripResponse decrementSeats(Long id, int quantity) {
         Trajet trajet = tripRepository.findById(id)
                 .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + id));
+
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(trajet.getDriverId());
 
         if (trajet.getPlacesDisponibles() < quantity) {
             throw new com.ndaje.trip.exception.BusinessException("Not enough seats available");
@@ -137,6 +144,9 @@ public class TripServiceImpl implements TripService {
     public TripResponse updateTrip(Long id, com.ndaje.trip.dto.request.UpdateTripRequest request) {
         Trajet trajet = tripRepository.findById(id)
                 .orElseThrow(() -> new TripNotFoundException("Trip not found with id: " + id));
+
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(trajet.getDriverId());
 
         // Update fields if present (assuming non-null means update, or we can just
         // overwrite)

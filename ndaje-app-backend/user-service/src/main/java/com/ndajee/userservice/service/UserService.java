@@ -14,9 +14,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import com.ndajee.userservice.entities.Admin;
-import com.ndajee.userservice.repositories.AdminRepository;
 import com.ndajee.userservice.dto.*;
+import com.ndajee.userservice.security.SecurityUtils;
 
 /**
  * Service gérant la logique métier des utilisateurs.
@@ -30,7 +29,6 @@ public class UserService {
     private final PassagerRepository passagerRepository;
     private final ConducteurRepository conducteurRepository;
     private final UtilisateurRepository utilisateurRepository;
-    private final AdminRepository adminRepository;
     private final com.ndajee.userservice.repositories.CaravannierRepository caravannierRepository;
     private final KeycloakService keycloakService;
 
@@ -112,38 +110,7 @@ public class UserService {
         }
     }
 
-    /**
-     * Inscrit un administrateur système.
-     */
-    @Transactional
-    public UserResponse registerAdmin(UserRegistrationRequest request) {
-        if (utilisateurRepository.findByEmail(request.getEmail()).isPresent()) {
-            return mapToResponse(utilisateurRepository.findByEmail(request.getEmail()).get(), "ADMIN");
-        }
-
-        String keycloakId = null;
-
-        try {
-            keycloakId = keycloakService.createUser(request, "ADMIN");
-
-            Admin admin = new Admin();
-            mapCommonFields(admin, request);
-            admin.setId(keycloakId);
-            admin.setRole("ADMIN");
-
-            Admin saved = adminRepository.save(admin);
-            return mapToResponse(saved, "ADMIN");
-        } catch (Exception ex) {
-            if (keycloakId != null) {
-                try {
-                    keycloakService.deleteUser(keycloakId);
-                } catch (Exception kcEx) {
-                    log.error("Échec rollback Keycloak pour l'administrateur {}", keycloakId, kcEx);
-                }
-            }
-            throw ex;
-        }
-    }
+    // registerAdmin a été retiré car l'entité Admin n'existe plus
 
     /**
      * Inscrit un nouveau caravannier (Organisateur de Pèlerinages ou Voyages).
@@ -223,6 +190,9 @@ public class UserService {
      */
     @Transactional
     public UserResponse updateProfile(String id, UpdateProfileRequest request) {
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(id);
+
         Utilisateur user = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
 
@@ -245,8 +215,6 @@ public class UserService {
             return "PASSAGER";
         if (user instanceof Conducteur)
             return "DRIVER";
-        if (user instanceof Admin)
-            return "ADMIN";
         if (user instanceof com.ndajee.userservice.entities.Caravannier)
             return "CARAVANNIER";
         return "INCONNU";

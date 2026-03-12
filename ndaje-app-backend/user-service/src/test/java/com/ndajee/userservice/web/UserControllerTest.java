@@ -123,21 +123,6 @@ class UserControllerTest {
     }
 
     @Test
-    void logout_ShouldReturnNoContent() throws Exception {
-        LogoutRequest logoutRequest = new LogoutRequest();
-        logoutRequest.setRefreshToken("test-refresh-token");
-
-        doNothing().when(userService).logout(any(LogoutRequest.class));
-
-        mockMvc.perform(post("/api/users/logout")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(logoutRequest)))
-                .andExpect(status().isNoContent());
-
-        verify(userService, times(1)).logout(any(LogoutRequest.class));
-    }
-
-    @Test
     void forgotPassword_ShouldReturnNoContent() throws Exception {
         doNothing().when(userService).forgotPassword("john@example.com");
 

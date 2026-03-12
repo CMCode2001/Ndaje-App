@@ -19,11 +19,14 @@ public abstract class Utilisateur extends Auditable {
 
     private String prenom;
     private String nom;
+    @Convert(converter = com.ndajee.userservice.config.EncryptionConverter.class)
     private String email;
+
+    @Convert(converter = com.ndajee.userservice.config.EncryptionConverter.class)
     private String telephone;
-    
+
     private String role;
-    
-    private boolean actif=true;
+
+    private boolean actif = true;
 
 }

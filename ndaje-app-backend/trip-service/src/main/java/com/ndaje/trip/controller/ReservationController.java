@@ -23,55 +23,54 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReservationController {
 
-    private final ReservationService reservationService;
+        private final ReservationService reservationService;
 
-    /**
-     * Crée une réservation ("TRAJET" ou "CARAVANE") et décrémente les places en
-     * temps réel.
-     */
-    @PostMapping
-    public ResponseEntity<ApiResponse<ReservationResponse>> createReservation(
-            @Valid @RequestBody CreateReservationRequest request) {
+        /**
+         * Crée une réservation ("TRAJET" ou "CARAVANE") et décrémente les places en
+         * temps réel.
+         */
+        @PostMapping
+        public ResponseEntity<ApiResponse<ReservationResponse>> createReservation(
+                        @Valid @RequestBody CreateReservationRequest request) {
 
-        ReservationResponse response = reservationService.createReservation(request);
+                ReservationResponse response = reservationService.createReservation(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.<ReservationResponse>builder()
-                        .success(true)
-                        .message("Réservation confirmée avec succès")
-                        .data(response)
-                        .build());
-    }
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(ApiResponse.<ReservationResponse>builder()
+                                                .success(true)
+                                                .message("Réservation confirmée avec succès")
+                                                .data(response)
+                                                .build());
+        }
 
-    /**
-     * Historique des réservations d'un passager.
-     */
-    @GetMapping("/passenger/{passengerId}")
-    public ResponseEntity<ApiResponse<List<ReservationResponse>>> getReservationsByPassengerId(
-            @PathVariable String passengerId) {
+        /**
+         * Historique des réservations d'un passager.
+         */
+        @GetMapping("/passenger/{passengerId}")
+        public ResponseEntity<ApiResponse<List<ReservationResponse>>> getReservationsByPassengerId(
+                        @PathVariable String passengerId) {
 
-        List<ReservationResponse> reservations = reservationService.getReservationsByPassengerId(passengerId);
+                List<ReservationResponse> reservations = reservationService.getReservationsByPassengerId(passengerId);
 
-        return ResponseEntity.ok(ApiResponse.<List<ReservationResponse>>builder()
-                .success(true)
-                .message("Historique des réservations récupéré")
-                .data(reservations)
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<List<ReservationResponse>>builder()
+                                .success(true)
+                                .message("Historique des réservations récupéré")
+                                .data(reservations)
+                                .build());
+        }
 
-    /**
-     * Annule une réservation (si le passager en est bien l'auteur).
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> cancelReservation(
-            @PathVariable("id") Long id,
-            @RequestParam("passengerId") String passengerId) {
+        /**
+         * Annule une réservation (si le passager en est bien l'auteur).
+         */
+        @DeleteMapping("/{id}")
+        public ResponseEntity<ApiResponse<Void>> cancelReservation(
+                        @PathVariable("id") Long id) {
 
-        reservationService.cancelReservation(id, passengerId);
+                reservationService.cancelReservation(id);
 
-        return ResponseEntity.ok(ApiResponse.<Void>builder()
-                .success(true)
-                .message("Réservation annulée, places restituées")
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<Void>builder()
+                                .success(true)
+                                .message("Réservation annulée, places restituées")
+                                .build());
+        }
 }

@@ -1,4 +1,5 @@
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\dto\UpdateProfileRequest.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\security\SecurityUtils.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\ConducteurRepository.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\client\CarClient.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\entities\StatutDocument.java
@@ -19,6 +20,7 @@ C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-ser
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\PassagerRepository.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\web\UserController.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\service\AdminService.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\config\EncryptionConverter.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\exception\BusinessException.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\exception\GlobalExceptionHandler.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\user-service\src\main\java\com\ndajee\userservice\repositories\UtilisateurDocumentRepository.java

@@ -78,6 +78,14 @@ class VehiculeServiceImplTest {
         vehiculeResponse.setStatutVerification(StatutVerificationVehicule.EN_ATTENTE);
     }
 
+    private void setMockSecurityContext(String userId) {
+        JwtAuthenticationToken mockAuth = mock(JwtAuthenticationToken.class);
+        lenient().when(mockAuth.getName()).thenReturn(userId);
+        SecurityContext mockContext = mock(SecurityContext.class);
+        lenient().when(mockContext.getAuthentication()).thenReturn(mockAuth);
+        SecurityContextHolder.setContext(mockContext);
+    }
+
     @Test
     void createVehicule_WithDriverIdInRequest_ShouldSuccess() {
         when(vehiculeMapper.toEntity(vehiculeRequest)).thenReturn(vehicule);
@@ -135,6 +143,7 @@ class VehiculeServiceImplTest {
 
     @Test
     void updateVehicule_ShouldSuccess_WhenVehiculeExists() {
+        setMockSecurityContext("driver-1");
         when(vehiculeRepository.findById(1L)).thenReturn(Optional.of(vehicule));
         doNothing().when(vehiculeMapper).updateEntityFromRequest(vehiculeRequest, vehicule);
         when(vehiculeRepository.save(vehicule)).thenReturn(vehicule);
@@ -145,6 +154,7 @@ class VehiculeServiceImplTest {
         assertNotNull(response);
         assertEquals(1L, response.getId());
         verify(vehiculeRepository, times(1)).save(vehicule);
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -190,15 +200,19 @@ class VehiculeServiceImplTest {
 
     @Test
     void deleteVehicule_ShouldDelete() {
+        setMockSecurityContext("driver-1");
+        when(vehiculeRepository.findById(1L)).thenReturn(Optional.of(vehicule));
         doNothing().when(vehiculeRepository).deleteById(1L);
 
         vehiculeService.deleteVehicule(1L);
 
         verify(vehiculeRepository, times(1)).deleteById(1L);
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void uploadDocument_ShouldSuccess() {
+        setMockSecurityContext("driver-1");
         when(vehiculeRepository.findById(1L)).thenReturn(Optional.of(vehicule));
 
         MockMultipartFile file = new MockMultipartFile("file", "cert.pdf", "application/pdf", "data".getBytes());
@@ -212,15 +226,18 @@ class VehiculeServiceImplTest {
 
         assertNotNull(response);
         assertEquals(10L, response.getId());
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void uploadDocument_ShouldThrowException_WhenVehiculeNotFound() {
+        setMockSecurityContext("driver-1");
         when(vehiculeRepository.findById(1L)).thenReturn(Optional.empty());
         MockMultipartFile file = new MockMultipartFile("file", "cert.pdf", "application/pdf", "data".getBytes());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> vehiculeService.uploadDocument(1L, file, "ASSURANCE", "12345", "2025-12-31"));
+        SecurityContextHolder.clearContext();
     }
 
     @Test

@@ -25,6 +25,7 @@ public class UserRegistrationRequest {
 
     @NotBlank(message = "Le mot de passe est obligatoire")
     @Size(min = 6, max = 100, message = "Le mot de passe doit faire au moins 6 caractères")
+    @lombok.ToString.Exclude
     private String password;
 
     @Pattern(regexp = "^\\+?[0-9]{9,15}$", message = "Le format du numéro de téléphone est invalide")

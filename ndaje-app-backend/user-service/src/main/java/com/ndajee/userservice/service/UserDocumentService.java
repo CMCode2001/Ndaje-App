@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.ndajee.userservice.security.SecurityUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +40,9 @@ public class UserDocumentService {
     public DocumentUtilisateurResponse uploadDocument(String userId, MultipartFile file,
             String typeDocStr, String numero,
             String expirationStr) {
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(userId);
+
         if (file.isEmpty())
             throw new IllegalArgumentException("Le fichier est vide");
         if (file.getSize() > MAX_FILE_SIZE)
@@ -106,6 +110,10 @@ public class UserDocumentService {
     public void deleteDocument(Long documentId) {
         UtilisateurDocument doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("Document introuvable: " + documentId));
+
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(doc.getUserId());
+
         s3StorageService.deleteFile(doc.getS3Key());
         documentRepository.delete(doc);
         log.info("Document supprimé: id={}", documentId);

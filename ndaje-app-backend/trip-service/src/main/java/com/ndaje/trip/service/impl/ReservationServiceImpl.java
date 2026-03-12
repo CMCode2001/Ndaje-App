@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ndaje.trip.security.SecurityUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +35,9 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public ReservationResponse createReservation(CreateReservationRequest request) {
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(request.getPassengerId());
+
         // 1. Validation du passager
         try {
             userClient.getUserById(request.getPassengerId());
@@ -98,11 +102,13 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public void cancelReservation(Long reservationId, String passengerId) {
+    public void cancelReservation(Long reservationId) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
+
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BusinessException("Réservation introuvable"));
 
-        if (!res.getPassengerId().equals(passengerId)) {
+        if (!res.getPassengerId().equals(currentUserId)) {
             throw new BusinessException("Non autorisé à annuler cette réservation");
         }
 

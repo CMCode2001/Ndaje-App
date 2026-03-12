@@ -10,5 +10,5 @@ public interface ReservationService {
 
     List<ReservationResponse> getReservationsByPassengerId(String passengerId);
 
-    void cancelReservation(Long reservationId, String passengerId);
+    void cancelReservation(Long reservationId);
 }

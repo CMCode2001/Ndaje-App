@@ -20,6 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,6 +68,14 @@ class TripServiceImplTest {
         createRequest.setDateDepart(LocalDateTime.now().plusDays(2));
         createRequest.setPlacesDisponibles(4);
         createRequest.setPrix(3000.0);
+    }
+
+    private void setMockSecurityContext(String userId) {
+        JwtAuthenticationToken mockAuth = mock(JwtAuthenticationToken.class);
+        when(mockAuth.getName()).thenReturn(userId);
+        SecurityContext mockContext = mock(SecurityContext.class);
+        when(mockContext.getAuthentication()).thenReturn(mockAuth);
+        SecurityContextHolder.setContext(mockContext);
     }
 
     @Test
@@ -117,6 +128,7 @@ class TripServiceImplTest {
 
     @Test
     void updateTripStatus_shouldUpdate() {
+        setMockSecurityContext("driver-123");
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trajet));
         when(tripRepository.save(any(Trajet.class))).thenReturn(trajet);
 
@@ -124,10 +136,12 @@ class TripServiceImplTest {
 
         assertNotNull(response);
         assertEquals(StatutTrajet.COMPLETED, trajet.getStatutTrajet());
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void decrementSeats_shouldDecrementSuccess() {
+        setMockSecurityContext("driver-123");
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trajet));
         when(tripRepository.save(any(Trajet.class))).thenReturn(trajet);
 
@@ -135,17 +149,21 @@ class TripServiceImplTest {
 
         assertEquals(2, trajet.getPlacesDisponibles());
         verify(tripRepository, times(1)).save(any(Trajet.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void decrementSeats_shouldThrowException_whenNotEnoughSeats() {
+        setMockSecurityContext("driver-123");
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trajet));
 
         assertThrows(BusinessException.class, () -> tripService.decrementSeats(1L, 5));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void updateTrip_shouldUpdateFields() {
+        setMockSecurityContext("driver-123");
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trajet));
         when(tripRepository.save(any(Trajet.class))).thenReturn(trajet);
 
@@ -156,5 +174,6 @@ class TripServiceImplTest {
 
         assertNotNull(response);
         assertEquals(5000.0, trajet.getPrix());
+        SecurityContextHolder.clearContext();
     }
 }

@@ -27,6 +27,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceImplTest {
@@ -88,6 +92,7 @@ class ReservationServiceImplTest {
 
     @Test
     void createReservation_Trajet_ShouldCreateSuccessfully() {
+        setMockSecurityContext("passenger-1");
         when(userClient.getUserById(anyString())).thenReturn(mock(com.ndaje.trip.dto.response.UserDto.class));
         when(tripRepository.findById(anyLong())).thenReturn(Optional.of(trajet));
         when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationTrajet);
@@ -100,10 +105,12 @@ class ReservationServiceImplTest {
         assertEquals(3, trajet.getPlacesDisponibles()); // 5 - 2
         verify(tripRepository, times(1)).save(trajet);
         verify(reservationRepository, times(1)).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void createReservation_Caravane_ShouldCreateSuccessfully() {
+        setMockSecurityContext("passenger-2");
         when(userClient.getUserById(anyString())).thenReturn(mock(com.ndaje.trip.dto.response.UserDto.class));
         when(caravaneRepository.findById(anyLong())).thenReturn(Optional.of(caravane));
         when(reservationRepository.save(any(Reservation.class))).thenReturn(reservationCaravane);
@@ -116,24 +123,29 @@ class ReservationServiceImplTest {
         assertEquals(7, caravane.getPlacesDisponibles()); // 10 - 3
         verify(caravaneRepository, times(1)).save(caravane);
         verify(reservationRepository, times(1)).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void createReservation_ShouldThrowException_WhenUserNotFound() {
+        setMockSecurityContext("passenger-1");
         when(userClient.getUserById(anyString())).thenThrow(new RuntimeException("User not found"));
 
         assertThrows(BusinessException.class, () -> reservationService.createReservation(requestTrajet));
         verify(reservationRepository, never()).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void createReservation_ShouldThrowException_WhenNotEnoughPlacesInTrajet() {
+        setMockSecurityContext("passenger-1");
         requestTrajet.setPlaces(10);
         when(userClient.getUserById(anyString())).thenReturn(mock(com.ndaje.trip.dto.response.UserDto.class));
         when(tripRepository.findById(anyLong())).thenReturn(Optional.of(trajet));
 
         assertThrows(BusinessException.class, () -> reservationService.createReservation(requestTrajet));
         verify(reservationRepository, never()).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -149,44 +161,63 @@ class ReservationServiceImplTest {
 
     @Test
     void cancelReservation_Trajet_ShouldCancelAndRestitutePlaces() {
+        setMockSecurityContext("passenger-1");
+
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservationTrajet));
         when(tripRepository.findById(10L)).thenReturn(Optional.of(trajet));
 
-        reservationService.cancelReservation(1L, "passenger-1");
+        reservationService.cancelReservation(1L);
 
         assertEquals(StatutReservation.CANCELLED, reservationTrajet.getStatus());
         assertEquals(7, trajet.getPlacesDisponibles()); // 5 + 2 restituted places
         verify(reservationRepository, times(1)).save(reservationTrajet);
         verify(tripRepository, times(1)).save(trajet);
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void cancelReservation_Caravane_ShouldCancelAndRestitutePlaces() {
+        setMockSecurityContext("passenger-2");
         when(reservationRepository.findById(2L)).thenReturn(Optional.of(reservationCaravane));
         when(caravaneRepository.findById(20L)).thenReturn(Optional.of(caravane));
 
-        reservationService.cancelReservation(2L, "passenger-2");
+        reservationService.cancelReservation(2L);
 
         assertEquals(StatutReservation.CANCELLED, reservationCaravane.getStatus());
         assertEquals(13, caravane.getPlacesDisponibles()); // 10 + 3 restituted places
         verify(reservationRepository, times(1)).save(reservationCaravane);
         verify(caravaneRepository, times(1)).save(caravane);
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void cancelReservation_ShouldThrowException_WhenNotPassenger() {
+        setMockSecurityContext("wrong-passenger");
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservationTrajet));
 
-        assertThrows(BusinessException.class, () -> reservationService.cancelReservation(1L, "wrong-passenger"));
+        assertThrows(BusinessException.class, () -> reservationService.cancelReservation(1L));
         verify(reservationRepository, never()).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     void cancelReservation_ShouldThrowException_WhenAlreadyCancelled() {
+        setMockSecurityContext("passenger-1");
         reservationTrajet.setStatus(StatutReservation.CANCELLED);
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservationTrajet));
 
-        assertThrows(BusinessException.class, () -> reservationService.cancelReservation(1L, "passenger-1"));
+        assertThrows(BusinessException.class, () -> reservationService.cancelReservation(1L));
         verify(reservationRepository, never()).save(any(Reservation.class));
+        SecurityContextHolder.clearContext();
+    }
+
+    private void setMockSecurityContext(String userId) {
+        JwtAuthenticationToken mockAuth = mock(JwtAuthenticationToken.class);
+        when(mockAuth.getName()).thenReturn(userId);
+        SecurityContext mockContext = mock(SecurityContext.class);
+        when(mockContext.getAuthentication()).thenReturn(mockAuth);
+        SecurityContextHolder.setContext(mockContext);
     }
 }

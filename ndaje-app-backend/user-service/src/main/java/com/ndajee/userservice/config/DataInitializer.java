@@ -17,7 +17,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("Verification et initialisation du compte admin...");
-        
+
         try {
             UserRegistrationRequest adminRequest = new UserRegistrationRequest();
             adminRequest.setPrenom("Super");
@@ -26,10 +26,11 @@ public class DataInitializer implements CommandLineRunner {
             adminRequest.setPassword("admin123");
             adminRequest.setTelephone("770000000");
 
-            userService.registerAdmin(adminRequest);
+            // userService.registerAdmin(adminRequest);
             log.info("Initialisation du compte admin reussie.");
         } catch (Exception e) {
-            log.warn("L'administrateur système existe probablement déjà ou Keycloak est indisponible : {}", e.getMessage());
+            log.warn("L'administrateur système existe probablement déjà ou Keycloak est indisponible : {}",
+                    e.getMessage());
         }
     }
 }

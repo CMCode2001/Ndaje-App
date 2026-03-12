@@ -13,5 +13,6 @@ public class LoginRequest {
 
     @NotBlank(message = "Le mot de passe est obligatoire")
     @Size(min = 6, max = 100, message = "Le mot de passe doit faire au moins 6 caractères")
+    @lombok.ToString.Exclude
     private String password;
 }

@@ -38,6 +38,7 @@ C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-ser
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\service\ReservationService.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\dto\response\TripResponse.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\entity\StatutCaravane.java
+C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\security\SecurityUtils.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\dto\response\UserDto.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\client\CarClient.java
 C:\Users\Pegasus77\Documents\Projets\Ndajee\Ndaje-App\ndaje-app-backend\trip-service\src\main\java\com\ndaje\trip\controller\TripController.java

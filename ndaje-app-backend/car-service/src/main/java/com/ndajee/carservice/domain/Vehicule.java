@@ -20,6 +20,7 @@ public class Vehicule {
     private Long id;
     private String marque;
     private String modele;
+    @jakarta.persistence.Convert(converter = com.ndajee.carservice.config.EncryptionConverter.class)
     private String immatriculation;
     private String couleur;
 

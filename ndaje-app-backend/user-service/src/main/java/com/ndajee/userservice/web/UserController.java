@@ -1,5 +1,6 @@
 package com.ndajee.userservice.web;
 
+import com.ndajee.userservice.dto.LogoutRequest;
 import com.ndajee.userservice.dto.UserRegistrationRequest;
 import com.ndajee.userservice.dto.UserResponse;
 import com.ndajee.userservice.service.UserService;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.ndajee.userservice.dto.UpdateProfileRequest;
-import com.ndajee.userservice.dto.LogoutRequest;
 
 /**
  * Contrôleur gérant les opérations utilisateurs standards : inscription,

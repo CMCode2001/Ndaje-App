@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
-                .headers(h -> h.frameOptions(fo -> fo.disable()))
+                .headers(h -> h.frameOptions(fo -> fo.sameOrigin()))
                 .authorizeHttpRequests(ar -> ar
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/users/**").permitAll()

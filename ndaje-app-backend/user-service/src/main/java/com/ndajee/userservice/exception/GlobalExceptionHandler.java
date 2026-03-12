@@ -21,17 +21,16 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 ex.getMessage(),
-                request.getDescription(false)
-        );
+                request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errors.put(error.getField(), error.getDefaultMessage()));
-        
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
@@ -40,9 +39,8 @@ public class GlobalExceptionHandler {
         log.error("Erreur inattendue : ", ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
-                "Une erreur inattendue est survenue: " + ex.getMessage(),
-                request.getDescription(false)
-        );
+                "Une erreur interne est survenue.",
+                request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

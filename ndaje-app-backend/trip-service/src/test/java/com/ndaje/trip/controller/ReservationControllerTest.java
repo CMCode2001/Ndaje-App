@@ -83,12 +83,12 @@ class ReservationControllerTest {
 
     @Test
     void cancelReservation_ShouldReturnOk() throws Exception {
-        doNothing().when(reservationService).cancelReservation(1L, "passenger-1");
+        doNothing().when(reservationService).cancelReservation(1L);
 
-        mockMvc.perform(delete("/api/reservations/1").param("passengerId", "passenger-1"))
+        mockMvc.perform(delete("/api/reservations/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(reservationService, times(1)).cancelReservation(1L, "passenger-1");
+        verify(reservationService, times(1)).cancelReservation(1L);
     }
 }

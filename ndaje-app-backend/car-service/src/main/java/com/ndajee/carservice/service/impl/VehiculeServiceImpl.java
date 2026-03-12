@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.ndajee.carservice.security.SecurityUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,9 @@ public class VehiculeServiceImpl implements VehiculeService {
     public VehiculeResponse updateVehicule(Long id, VehiculeRequest vehiculeRequest) {
         return vehiculeRepository.findById(id)
                 .map(existingVehicule -> {
+                    // Enforce BOLA/IDOR protection
+                    SecurityUtils.verifyOwnership(existingVehicule.getDriverId());
+
                     vehiculeMapper.updateEntityFromRequest(vehiculeRequest, existingVehicule);
                     return vehiculeMapper.toResponse(vehiculeRepository.save(existingVehicule));
                 })
@@ -77,15 +81,22 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public void deleteVehicule(Long id) {
-        vehiculeRepository.deleteById(id);
+        vehiculeRepository.findById(id).ifPresent(vehicule -> {
+            // Enforce BOLA/IDOR protection
+            SecurityUtils.verifyOwnership(vehicule.getDriverId());
+            vehiculeRepository.deleteById(id);
+        });
     }
 
     @Override
     public DocumentResponse uploadDocument(Long vehiculeId, MultipartFile file,
             String typeDocument, String numero, String expiration) {
         // Vérifie que le véhicule existe
-        vehiculeRepository.findById(vehiculeId)
+        Vehicule vehicule = vehiculeRepository.findById(vehiculeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicule not found with id: " + vehiculeId));
+
+        // Enforce BOLA/IDOR protection
+        SecurityUtils.verifyOwnership(vehicule.getDriverId());
 
         // Délègue au service local — plus de Feign vers document-service
         return vehiculeDocumentService.uploadDocument(vehiculeId, file, typeDocument, numero, expiration);
